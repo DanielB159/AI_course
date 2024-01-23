@@ -90,9 +90,9 @@ class PacmanProblem(search.Problem):
     def ghost_can_move_pos(self, state, new_locations: dict, curr_ghost_color, new_ghost_pos, n, m):
         """ Check if the ghost of color curr_ghost can move to new_ghost_pos """
         # check if the move is in the matrix
-        if new_ghost_pos[0] >= n or new_ghost_pos[0] < 0 or new_ghost_pos[1] >= m or new_ghost_pos[1] <= 0:
+        if new_ghost_pos[0] >= n or new_ghost_pos[0] < 0 or new_ghost_pos[1] >= m or new_ghost_pos[1] < 0:
             return False
-        if state[*new_ghost_pos] == WALL: # check if the new ghost position has a wall
+        if state[new_ghost_pos[0]][new_ghost_pos[1]] == WALL: # check if the new ghost position has a wall
             return False
         for ghost_color_i, new_location in new_locations.items(): # check for any other ghost in new pos
             if ghost_color_i != curr_ghost_color:
@@ -141,55 +141,66 @@ class PacmanProblem(search.Problem):
         
 
         
-    def calculate_new_positions(self, state, player_new_pos, locations, n, m):
+    def calculate_new_positions(self, state, player_new_pos, player_old_pos, locations, n, m):
         new_positions : dict[tuple, int] = {}
+        # calculate the new state positions of pacman
+        if state[player_old_pos[0]][player_old_pos[1]] == RED_COIN:
+            new_positions[player_old_pos] = REGULAR_SLOT_COIN
+        else: # if the ghost can move, it is because its next position is either 11 or 10
+            new_positions[player_old_pos] = REGULAR_SLOT_NO_COIN
+        if state[player_new_pos[0]][player_new_pos[1]] == REGULAR_SLOT_COIN:
+            new_positions[player_new_pos] = RED_COIN
+        else:
+            new_positions[player_new_pos] = RED
+
         new_locations: dict[str,tuple] = self.deep_copy_dict(locations)
         new_locations["PACMAN"] = player_new_pos # define the new pacman position in the new state
         # if the red ghost is present in the state
-        if new_locations["RED"]:
+        if "RED" in new_locations:
             self.calculate_ghost_new_pos(state, new_locations, "RED", n, m)
             if new_locations["RED"] != locations["RED"]: # if the ghost has moved, add relevant positions
-                if state[*locations["RED"]] == RED_COIN:
+                if state[locations["RED"][0]][locations["RED"][1]] == RED_COIN:
                     new_positions[locations["RED"]] = REGULAR_SLOT_COIN
-                else: # if the ghost can move, it is because its next position is either 11 or 10
+                else: # if the ghost can move, its former position was either with coin or without coin
                     new_positions[locations["RED"]] = REGULAR_SLOT_NO_COIN
-                if state[*new_locations["RED"]] == REGULAR_SLOT_COIN:
+                if state[new_locations["RED"][0]][new_locations["RED"][1]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["RED"]] = RED_COIN
-                else:
+                elif state[new_locations["RED"][0]][new_locations["RED"][1]] == REGULAR_SLOT_NO_COIN:
                     new_positions[new_locations["RED"]] = RED
+                    
         # if the blue ghost is present in the state
-        if new_locations["BLUE"]:
+        if "BLUE" in new_locations:
             self.calculate_ghost_new_pos(state, new_locations, "BLUE", n, m)
             if new_locations["BLUE"] != locations["BLUE"]: # if the ghost has moved, add relevant positions
-                if state[*locations["BLUE"]] == BLUE_COIN:
+                if state[locations["BLUE"][0]][locations["BLUE"][1]] == BLUE_COIN:
                     new_positions[locations["BLUE"]] = REGULAR_SLOT_COIN
-                else: # if the ghost can move, it is because its next position is either 11 or 10
+                else: # if the ghost can move, its former position was either with coin or without coin
                     new_positions[locations["BLUE"]] = REGULAR_SLOT_NO_COIN
-                if state[*new_locations["BLUE"]] == REGULAR_SLOT_COIN:
+                if state[new_locations["BLUE"][0]][new_locations["BLUE"][1]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["BLUE"]] = BLUE_COIN
                 else:
                     new_positions[new_locations["BLUE"]] = BLUE
         # if the yellow ghost is present in the state
-        if new_locations["YELLOW"]:
+        if "YELLOW" in new_locations:
             self.calculate_ghost_new_pos(state, new_locations, "YELLOW", n, m)
             if new_locations["YELLOW"] != locations["YELLOW"]: # if the ghost has moved, add relevant positions
-                if state[*locations["YELLOW"]] == YELLOW_COIN:
+                if state[locations["YELLOW"][0]][locations["YELLOW"][1]] == YELLOW_COIN:
                     new_positions[locations["YELLOW"]] = REGULAR_SLOT_COIN
-                else: # if the ghost can move, it is because its next position is either 11 or 10
+                else: # if the ghost can move, its former position was either with coin or without coin
                     new_positions[locations["YELLOW"]] = REGULAR_SLOT_NO_COIN
-                if state[*new_locations["YELLOW"]] == REGULAR_SLOT_COIN:
+                if state[new_locations["YELLOW"][0]][new_locations["YELLOW"][1]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["YELLOW"]] = YELLOW_COIN
                 else:
                     new_positions[new_locations["YELLOW"]] = YELLOW
         # if the green ghost is present in the state
-        if new_locations["GREEN"]:
+        if "GREEN" in new_locations:
             self.calculate_ghost_new_pos(state, new_locations, "GREEN", n, m)
             if new_locations["GREEN"] != locations["GREEN"]: # if the ghost has moved, add relevant positions
-                if state[*locations["GREEN"]] == GREEN_COIN:
+                if state[locations["GREEN"][0]][locations["GREEN"][1]] == GREEN_COIN:
                     new_positions[locations["GREEN"]] = REGULAR_SLOT_COIN
-                else: # if the ghost can move, it is because its next position is either 11 or 10
+                else: # if the ghost can move, its former position was either with coin or without coin
                     new_positions[locations["GREEN"]] = REGULAR_SLOT_NO_COIN
-                if state[*new_locations["GREEN"]] == REGULAR_SLOT_COIN:
+                if state[new_locations["GREEN"][0]][new_locations["GREEN"][1]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["GREEN"]] = GREEN_COIN
                 else:
                     new_positions[new_locations["GREEN"]] = GREEN
@@ -208,13 +219,13 @@ class PacmanProblem(search.Problem):
         # define a resulting state for each move that pacman can make
         player_i, player_j = locations["PACMAN"]
         if player_i + 1 < n and state[player_i + 1][player_j] != WALL: # add state of pacman moving down
-            moves_and_states.append(("D", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i + 1, player_j), locations, n, m))))
+            moves_and_states.append(("D", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i + 1, player_j), locations["PACMAN"],  locations, n, m))))
         if player_i - 1 >= 0 and state[player_i - 1][player_j] != WALL:# add state of pacman moving up 
-            moves_and_states.append(("U", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i - 1, player_j), locations, n, m))))
+            moves_and_states.append(("U", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i - 1, player_j), locations["PACMAN"], locations, n, m))))
         if player_j + 1 < m and state[player_i][player_j + 1] != WALL:# add state of pacman moving right
-            moves_and_states.append(("R", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, player_j + 1), locations, n, m))))
+            moves_and_states.append(("R", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, player_j + 1), locations["PACMAN"], locations, n, m))))
         if player_j - 1 >= 0 and state[player_i][player_j - 1] != WALL:# add state of pacman moving left
-            moves_and_states.append(("L", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, player_j - 1), locations, n, m))))
+            moves_and_states.append(("L", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, player_j - 1), locations["PACMAN"], locations, n, m))))
         
         return moves_and_states
 
