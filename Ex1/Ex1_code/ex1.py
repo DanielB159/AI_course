@@ -87,8 +87,11 @@ class PacmanProblem(search.Problem):
         return tuple(map(tuple, modified))
 
 
-    def ghost_can_move_pos(self, state, new_locations: dict, curr_ghost_color, new_ghost_pos):
+    def ghost_can_move_pos(self, state, new_locations: dict, curr_ghost_color, new_ghost_pos, n, m):
         """ Check if the ghost of color curr_ghost can move to new_ghost_pos """
+        # check if the move is in the matrix
+        if new_ghost_pos[0] >= n or new_ghost_pos[0] < 0 or new_ghost_pos[1] >= m or new_ghost_pos[1] <= 0:
+            return False
         if state[*new_ghost_pos] == WALL: # check if the new ghost position has a wall
             return False
         for ghost_color_i, new_location in new_locations.items(): # check for any other ghost in new pos
@@ -108,25 +111,25 @@ class PacmanProblem(search.Problem):
         ghost_i, ghost_j = new_locations[curr_ghost_color]
         pacman_i, pacman_j = new_locations["PACMAN"]
         # check if can move right
-        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, (ghost_i, ((ghost_j + 1) % m))):
-            man_right : int = abs(ghost_i - pacman_i) + abs(((ghost_j + 1) % m) - pacman_j)
+        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, (ghost_i, ghost_j + 1), n, m):
+            man_right : int = abs(ghost_i - pacman_i) + abs(ghost_j + 1 - pacman_j)
             if man_right < min_dist_to_pacman[0]:
-                min_dist_to_pacman = (man_right, (ghost_i, ((ghost_j + 1) % m)))
+                min_dist_to_pacman = (man_right, (ghost_i, ghost_j + 1))
         # check if can move down
-        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, ((ghost_i + 1) % n, ghost_j )):
-            man_down : int = abs((ghost_i + 1) % n - pacman_i) + abs(ghost_j - pacman_j)
+        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, (ghost_i + 1, ghost_j ), n, m):
+            man_down : int = abs(ghost_i + 1 - pacman_i) + abs(ghost_j - pacman_j)
             if man_down < min_dist_to_pacman[0]:
-                min_dist_to_pacman = (man_down, ((ghost_i + 1) % n, ghost_j ))
+                min_dist_to_pacman = (man_down, (ghost_i + 1, ghost_j ))
         # check if can move left
-        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, (ghost_i, ((ghost_j - 1) % m))):
-            man_left : int = abs(ghost_i - pacman_i) + abs(((ghost_j - 1) % m) - pacman_j)
+        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, (ghost_i, ghost_j - 1), n, m):
+            man_left : int = abs(ghost_i - pacman_i) + abs(ghost_j - 1 - pacman_j)
             if man_left < min_dist_to_pacman[0]:
-                min_dist_to_pacman = (man_left, (ghost_i, ((ghost_j - 1) % m)))
+                min_dist_to_pacman = (man_left, (ghost_i, ghost_j - 1))
         # check if can move up
-        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, ((ghost_i - 1) % n, ghost_j )):
-            man_up : int = abs((ghost_i - 1) % n - pacman_i) + abs(ghost_j - pacman_j)
+        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, (ghost_i - 1, ghost_j ), n, m):
+            man_up : int = abs(ghost_i - 1 - pacman_i) + abs(ghost_j - pacman_j)
             if man_up < min_dist_to_pacman[0]:
-                min_dist_to_pacman = (man_up, ((ghost_i - 1) % n, ghost_j ))
+                min_dist_to_pacman = (man_up, (ghost_i - 1, ghost_j ))
         # if the ghost cannot move, return without changing the
         if min_dist_to_pacman[0] == INTMAX: 
             return
@@ -198,21 +201,20 @@ class PacmanProblem(search.Problem):
         """ Generates the successor state """
         n : int = len(state) # number of rows
         m : int = len(state[0]) # number of columns
-        successor_state_list = []
         # find the locations of pacman and the ghosts
         locations: dict[str,tuple] = self.find_locations(state, n, m)
         # define the resulting states
         moves_and_states = list[str,tuple]
         # define a resulting state for each move that pacman can make
         player_i, player_j = locations["PACMAN"]
-        if state[(player_i + 1) % n][player_j] != WALL: # add state of pacman moving down (circular movement if no walls are present)
-            moves_and_states.append(("D", self.modify_state_tuple(state, self.calculate_new_positions(state, ((player_i + 1) % n, player_j), locations, n, m))))
-        if state[(player_i - 1) % n][player_j] != WALL:# add state of pacman moving up (circular movement if no walls are present)
-            moves_and_states.append(("U", self.modify_state_tuple(state, self.calculate_new_positions(state, ((player_i - 1) % n, player_j), locations, n, m))))
-        if state[player_i][(player_j + 1) % m] != WALL:# add state of pacman moving right (circular movement if no walls are present)
-            moves_and_states.append(("R", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, (player_j + 1) % m), locations, n, m))))
-        if state[player_i][(player_j - 1) % m] != WALL:# add state of pacman moving left (circular movement if no walls are present)
-            moves_and_states.append(("L", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, (player_j) - 1 % m), locations, n, m))))
+        if player_i + 1 < n and state[player_i + 1][player_j] != WALL: # add state of pacman moving down
+            moves_and_states.append(("D", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i + 1, player_j), locations, n, m))))
+        if player_i - 1 >= 0 and state[player_i - 1][player_j] != WALL:# add state of pacman moving up 
+            moves_and_states.append(("U", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i - 1, player_j), locations, n, m))))
+        if player_j + 1 < m and state[player_i][player_j + 1] != WALL:# add state of pacman moving right
+            moves_and_states.append(("R", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, player_j + 1), locations, n, m))))
+        if player_j - 1 >= 0 and state[player_i][player_j - 1] != WALL:# add state of pacman moving left
+            moves_and_states.append(("L", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, player_j - 1), locations, n, m))))
         
         return moves_and_states
 
