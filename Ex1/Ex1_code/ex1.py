@@ -87,24 +87,6 @@ class PacmanProblem(search.Problem):
         return tuple(map(tuple, modified))
 
 
-    def calculate_ghost_new_pos(self, new_locations: dict, curr_ghost_color, n, m):
-        """ 
-            calculate the nearest position to pacman in hanhatten distance.
-            n - number of rows, m - number of columns
-        """
-        min_dist_to_pacman : tuple = (INTMAX, None)
-        ghost_i, ghost_j = new_locations[curr_ghost_color]
-        pacman_i, pacman_j = new_locations["PACMAN"]
-        man_left : int = abs(ghost_i - pacman_i) + abs(((ghost_j - 1) % m) - pacman_j)
-        man_right : int = abs(ghost_i - pacman_i) + abs(((ghost_j + 1) % m) - pacman_j)
-        man_up : int = abs((ghost_i - 1) % n - pacman_i) + abs(ghost_j - pacman_j)
-        man_down : int = abs((ghost_i + 1) % n - pacman_i) + abs(ghost_j - pacman_j)
-
-        
-
-
-
-    
     def ghost_can_move_pos(self, state, new_locations: dict, curr_ghost_color, new_ghost_pos):
         """ Check if the ghost of color curr_ghost can move to new_ghost_pos """
         if state[*new_ghost_pos] == WALL: # check if the new ghost position has a wall
@@ -116,18 +98,57 @@ class PacmanProblem(search.Problem):
         # if there is no wall or other ghost in the new_ghost_pos, current ghost can move there
         return True
 
-    def calculate_new_positions(self, state, player_new_pos, locations):
+
+    def calculate_ghost_new_pos(self, state, new_locations: dict, curr_ghost_color, n, m):
+        """ 
+            calculate the nearest position to pacman in hanhatten distance.
+            n - number of rows, m - number of columns
+        """
+        min_dist_to_pacman : tuple = (INTMAX, None)
+        ghost_i, ghost_j = new_locations[curr_ghost_color]
+        pacman_i, pacman_j = new_locations["PACMAN"]
+        # check if can move right
+        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, (ghost_i, ((ghost_j + 1) % m))):
+            man_right : int = abs(ghost_i - pacman_i) + abs(((ghost_j + 1) % m) - pacman_j)
+            if man_right < min_dist_to_pacman[0]:
+                min_dist_to_pacman = (man_right, (ghost_i, ((ghost_j + 1) % m)))
+        # check if can move down
+        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, ((ghost_i + 1) % n, ghost_j )):
+            man_down : int = abs((ghost_i + 1) % n - pacman_i) + abs(ghost_j - pacman_j)
+            if man_down < min_dist_to_pacman[0]:
+                min_dist_to_pacman = (man_down, ((ghost_i + 1) % n, ghost_j ))
+        # check if can move left
+        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, (ghost_i, ((ghost_j - 1) % m))):
+            man_left : int = abs(ghost_i - pacman_i) + abs(((ghost_j - 1) % m) - pacman_j)
+            if man_left < min_dist_to_pacman[0]:
+                min_dist_to_pacman = (man_left, (ghost_i, ((ghost_j - 1) % m)))
+        # check if can move up
+        if self.ghost_can_move_pos(state, new_locations, curr_ghost_color, ((ghost_i - 1) % n, ghost_j )):
+            man_up : int = abs((ghost_i - 1) % n - pacman_i) + abs(ghost_j - pacman_j)
+            if man_up < min_dist_to_pacman[0]:
+                min_dist_to_pacman = (man_up, ((ghost_i - 1) % n, ghost_j ))
+        # if the ghost cannot move, return without changing the
+        if min_dist_to_pacman[0] == INTMAX: 
+            return
+        # define the new position of the ghost - nearest position with relation to manhatten distance
+        new_locations[curr_ghost_color] = min_dist_to_pacman[1]
+        
+        
+        
+        
+
+        
+    def calculate_new_positions(self, state, player_new_pos, locations, n, m):
         new_positions : dict[tuple, int] = {}
         new_locations: dict[str,tuple] = self.deep_copy_dict(locations)
         new_locations["PACMAN"] = player_new_pos # define the new pacman position in the new state
         # if the red ghost is present in the state
         if new_locations["RED"]:
-            self.calculate_ghost_new_pos(new_locations, "RED")
+            self.calculate_ghost_new_pos(new_locations, "RED", n, m)
             if new_locations["RED"] != locations["RED"]: # if the ghost has moved, add relevant positions
-                # if self.ghost_can_move(state, new_locations, locations["RED"], new_locations["RED"]):
                 if state[*locations["RED"]] == RED_COIN:
                     new_positions[locations["RED"]] = REGULAR_SLOT_COIN
-                else # if the ghost can move, if is because its next position is either 11 or 10
+                else # if the ghost can move, it is because its next position is either 11 or 10
                     new_positions[locations["RED"]] = REGULAR_SLOT_NO_COIN
                 if state[*new_locations["RED"]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["RED"]] = RED_COIN
@@ -135,12 +156,11 @@ class PacmanProblem(search.Problem):
                     new_positions[new_locations["RED"]] = RED
         # if the blue ghost is present in the state
         if new_locations["BLUE"]:
-            self.calculate_ghost_new_pos(new_locations, "BLUE")
+            self.calculate_ghost_new_pos(new_locations, "BLUE", n, m)
             if new_locations["BLUE"] != locations["BLUE"]: # if the ghost has moved, add relevant positions
-                # if self.ghost_can_move(state, new_locations, locations["BLUE"], new_locations["BLUE"]):
                 if state[*locations["BLUE"]] == BLUE_COIN:
                     new_positions[locations["BLUE"]] = REGULAR_SLOT_COIN
-                else # if the ghost can move, if is because its next position is either 11 or 10
+                else # if the ghost can move, it is because its next position is either 11 or 10
                     new_positions[locations["BLUE"]] = REGULAR_SLOT_NO_COIN
                 if state[*new_locations["BLUE"]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["BLUE"]] = BLUE_COIN
@@ -148,12 +168,11 @@ class PacmanProblem(search.Problem):
                     new_positions[new_locations["BLUE"]] = BLUE
         # if the yellow ghost is present in the state
         if new_locations["YELLOW"]:
-            self.calculate_ghost_new_pos(new_locations, "YELLOW")
+            self.calculate_ghost_new_pos(new_locations, "YELLOW", n, m)
             if new_locations["YELLOW"] != locations["YELLOW"]: # if the ghost has moved, add relevant positions
-                # if self.ghost_can_move(state, new_locations, locations["YELLOW"], new_locations["YELLOW"]):
                 if state[*locations["YELLOW"]] == YELLOW_COIN:
                     new_positions[locations["YELLOW"]] = REGULAR_SLOT_COIN
-                else # if the ghost can move, if is because its next position is either 11 or 10
+                else # if the ghost can move, it is because its next position is either 11 or 10
                     new_positions[locations["YELLOW"]] = REGULAR_SLOT_NO_COIN
                 if state[*new_locations["YELLOW"]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["YELLOW"]] = YELLOW_COIN
@@ -161,12 +180,11 @@ class PacmanProblem(search.Problem):
                     new_positions[new_locations["YELLOW"]] = YELLOW
         # if the green ghost is present in the state
         if new_locations["GREEN"]:
-            self.calculate_ghost_new_pos(new_locations, "GREEN")
+            self.calculate_ghost_new_pos(new_locations, "GREEN", n, m)
             if new_locations["GREEN"] != locations["GREEN"]: # if the ghost has moved, add relevant positions
-                # if self.ghost_can_move(state, new_locations, locations["GREEN"], new_locations["GREEN"]):
                 if state[*locations["GREEN"]] == GREEN_COIN:
                     new_positions[locations["GREEN"]] = REGULAR_SLOT_COIN
-                else # if the ghost can move, if is because its next position is either 11 or 10
+                else # if the ghost can move, it is because its next position is either 11 or 10
                     new_positions[locations["GREEN"]] = REGULAR_SLOT_NO_COIN
                 if state[*new_locations["GREEN"]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["GREEN"]] = GREEN_COIN
@@ -188,13 +206,13 @@ class PacmanProblem(search.Problem):
         # define a resulting state for each move that pacman can make
         player_i, player_j = locations["PACMAN"]
         if state[(player_i + 1) % n][player_j] != WALL: # add state of pacman moving down (circular movement if no walls are present)
-            moves_and_states.append(("D", self.modify_state_tuple(state, self.calculate_new_positions(state, ((player_i + 1) % n, player_j), locations))))
+            moves_and_states.append(("D", self.modify_state_tuple(state, self.calculate_new_positions(state, ((player_i + 1) % n, player_j), locations, n, m))))
         if state[(player_i - 1) % n][player_j] != WALL:# add state of pacman moving up (circular movement if no walls are present)
-            moves_and_states.append(("U", self.modify_state_tuple(state, self.calculate_new_positions(state, ((player_i - 1) % n, player_j), locations))))
+            moves_and_states.append(("U", self.modify_state_tuple(state, self.calculate_new_positions(state, ((player_i - 1) % n, player_j), locations, n, m))))
         if state[player_i][(player_j + 1) % m] != WALL:# add state of pacman moving right (circular movement if no walls are present)
-            moves_and_states.append(("R", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, (player_j + 1) % m), locations))))
+            moves_and_states.append(("R", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, (player_j + 1) % m), locations, n, m))))
         if state[player_i][(player_j - 1) % m] != WALL:# add state of pacman moving left (circular movement if no walls are present)
-            moves_and_states.append(("L", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, (player_j) - 1 % m), locations))))
+            moves_and_states.append(("L", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, (player_j) - 1 % m), locations, n, m))))
         
         return moves_and_states
 
