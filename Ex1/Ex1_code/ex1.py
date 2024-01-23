@@ -144,11 +144,11 @@ class PacmanProblem(search.Problem):
         new_locations["PACMAN"] = player_new_pos # define the new pacman position in the new state
         # if the red ghost is present in the state
         if new_locations["RED"]:
-            self.calculate_ghost_new_pos(new_locations, "RED", n, m)
+            self.calculate_ghost_new_pos(state, new_locations, "RED", n, m)
             if new_locations["RED"] != locations["RED"]: # if the ghost has moved, add relevant positions
                 if state[*locations["RED"]] == RED_COIN:
                     new_positions[locations["RED"]] = REGULAR_SLOT_COIN
-                else # if the ghost can move, it is because its next position is either 11 or 10
+                else: # if the ghost can move, it is because its next position is either 11 or 10
                     new_positions[locations["RED"]] = REGULAR_SLOT_NO_COIN
                 if state[*new_locations["RED"]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["RED"]] = RED_COIN
@@ -156,11 +156,11 @@ class PacmanProblem(search.Problem):
                     new_positions[new_locations["RED"]] = RED
         # if the blue ghost is present in the state
         if new_locations["BLUE"]:
-            self.calculate_ghost_new_pos(new_locations, "BLUE", n, m)
+            self.calculate_ghost_new_pos(state, new_locations, "BLUE", n, m)
             if new_locations["BLUE"] != locations["BLUE"]: # if the ghost has moved, add relevant positions
                 if state[*locations["BLUE"]] == BLUE_COIN:
                     new_positions[locations["BLUE"]] = REGULAR_SLOT_COIN
-                else # if the ghost can move, it is because its next position is either 11 or 10
+                else: # if the ghost can move, it is because its next position is either 11 or 10
                     new_positions[locations["BLUE"]] = REGULAR_SLOT_NO_COIN
                 if state[*new_locations["BLUE"]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["BLUE"]] = BLUE_COIN
@@ -168,11 +168,11 @@ class PacmanProblem(search.Problem):
                     new_positions[new_locations["BLUE"]] = BLUE
         # if the yellow ghost is present in the state
         if new_locations["YELLOW"]:
-            self.calculate_ghost_new_pos(new_locations, "YELLOW", n, m)
+            self.calculate_ghost_new_pos(state, new_locations, "YELLOW", n, m)
             if new_locations["YELLOW"] != locations["YELLOW"]: # if the ghost has moved, add relevant positions
                 if state[*locations["YELLOW"]] == YELLOW_COIN:
                     new_positions[locations["YELLOW"]] = REGULAR_SLOT_COIN
-                else # if the ghost can move, it is because its next position is either 11 or 10
+                else: # if the ghost can move, it is because its next position is either 11 or 10
                     new_positions[locations["YELLOW"]] = REGULAR_SLOT_NO_COIN
                 if state[*new_locations["YELLOW"]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["YELLOW"]] = YELLOW_COIN
@@ -180,11 +180,11 @@ class PacmanProblem(search.Problem):
                     new_positions[new_locations["YELLOW"]] = YELLOW
         # if the green ghost is present in the state
         if new_locations["GREEN"]:
-            self.calculate_ghost_new_pos(new_locations, "GREEN", n, m)
+            self.calculate_ghost_new_pos(state, new_locations, "GREEN", n, m)
             if new_locations["GREEN"] != locations["GREEN"]: # if the ghost has moved, add relevant positions
                 if state[*locations["GREEN"]] == GREEN_COIN:
                     new_positions[locations["GREEN"]] = REGULAR_SLOT_COIN
-                else # if the ghost can move, it is because its next position is either 11 or 10
+                else: # if the ghost can move, it is because its next position is either 11 or 10
                     new_positions[locations["GREEN"]] = REGULAR_SLOT_NO_COIN
                 if state[*new_locations["GREEN"]] == REGULAR_SLOT_COIN:
                     new_positions[new_locations["GREEN"]] = GREEN_COIN
