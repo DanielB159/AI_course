@@ -11,6 +11,15 @@ YELLOW = 40
 GREEN = 50
 PACMAN = 77
 
+RED_COIN = RED + 1
+BLUE_COIN = BLUE + 1
+YELLOW_COIN = YELLOW + 1
+GREEN_COIN = GREEN + 1
+REGULAR_SLOT_NO_COIN = 10
+REGULAR_SLOT_COIN = 11
+WALL = 99
+INTMAX = 2147483647
+
 class PacmanProblem(search.Problem):
     """This class implements a pacman problem"""
     def __init__(self, initial):
@@ -23,6 +32,13 @@ class PacmanProblem(search.Problem):
         """ Constructor only needs the initial state.
         Don't forget to set the goal or implement the goal test"""
         search.Problem.__init__(self, initial)
+
+    def deep_copy_dict(self, dict: dict):
+        """ this function creates a deep copy of a python dictionary """
+        new_dict = {}
+        for key,value in dict.items():
+            new_dict[key] = value
+        return new_dict
 
     def find_player_state(self, state, N, M) -> tuple:
         """ finds the (i,j) location of the player in the currents state. None if there is no player """
@@ -37,7 +53,7 @@ class PacmanProblem(search.Problem):
             finds the (i,j) locations of ghosts and pacman in the currents state.
             returns mapping from "RED", "BLUE", "YELLOW", "GREEN", "PACMAN" to corresponding locations
         """
-        locations: dict = {}
+        locations: dict[str, tuple] = {}
         for i in range(n):
             for j in range(m):
                 match state[i][j]:
@@ -63,24 +79,124 @@ class PacmanProblem(search.Problem):
                         pass
         return locations
 
-                
+    def modify_state_tuple(self, state, new_positions: dict):
+        """ Modify the state of the tuple with the given changes dictionary """
+        modified = list(map(list, state))  # Convert to list of lists for mutability
+        for (i, j), value in new_positions.items():
+            modified[i][j] = value
+        return tuple(map(tuple, modified))
+
+
+    def calculate_ghost_new_pos(self, new_locations: dict, curr_ghost_color, n, m):
+        """ 
+            calculate the nearest position to pacman in hanhatten distance.
+            n - number of rows, m - number of columns
+        """
+        min_dist_to_pacman : tuple = (INTMAX, None)
+        ghost_i, ghost_j = new_locations[curr_ghost_color]
+        pacman_i, pacman_j = new_locations["PACMAN"]
+        man_left : int = abs(ghost_i - pacman_i) + abs(((ghost_j - 1) % m) - pacman_j)
+        man_right : int = abs(ghost_i - pacman_i) + abs(((ghost_j + 1) % m) - pacman_j)
+        man_up : int = abs((ghost_i - 1) % n - pacman_i) + abs(ghost_j - pacman_j)
+        man_down : int = abs((ghost_i + 1) % n - pacman_i) + abs(ghost_j - pacman_j)
+
+        
+
+
+
+    
+    def ghost_can_move_pos(self, state, new_locations: dict, curr_ghost_color, new_ghost_pos):
+        """ Check if the ghost of color curr_ghost can move to new_ghost_pos """
+        if state[*new_ghost_pos] == WALL: # check if the new ghost position has a wall
+            return False
+        for ghost_color_i, new_location in new_locations.items(): # check for any other ghost in new pos
+            if ghost_color_i != curr_ghost_color:
+                if new_location == new_ghost_pos:
+                    return False
+        # if there is no wall or other ghost in the new_ghost_pos, current ghost can move there
+        return True
+
+    def calculate_new_positions(self, state, player_new_pos, locations):
+        new_positions : dict[tuple, int] = {}
+        new_locations: dict[str,tuple] = self.deep_copy_dict(locations)
+        new_locations["PACMAN"] = player_new_pos # define the new pacman position in the new state
+        # if the red ghost is present in the state
+        if new_locations["RED"]:
+            self.calculate_ghost_new_pos(new_locations, "RED")
+            if new_locations["RED"] != locations["RED"]: # if the ghost has moved, add relevant positions
+                # if self.ghost_can_move(state, new_locations, locations["RED"], new_locations["RED"]):
+                if state[*locations["RED"]] == RED_COIN:
+                    new_positions[locations["RED"]] = REGULAR_SLOT_COIN
+                else # if the ghost can move, if is because its next position is either 11 or 10
+                    new_positions[locations["RED"]] = REGULAR_SLOT_NO_COIN
+                if state[*new_locations["RED"]] == REGULAR_SLOT_COIN:
+                    new_positions[new_locations["RED"]] = RED_COIN
+                else:
+                    new_positions[new_locations["RED"]] = RED
+        # if the blue ghost is present in the state
+        if new_locations["BLUE"]:
+            self.calculate_ghost_new_pos(new_locations, "BLUE")
+            if new_locations["BLUE"] != locations["BLUE"]: # if the ghost has moved, add relevant positions
+                # if self.ghost_can_move(state, new_locations, locations["BLUE"], new_locations["BLUE"]):
+                if state[*locations["BLUE"]] == BLUE_COIN:
+                    new_positions[locations["BLUE"]] = REGULAR_SLOT_COIN
+                else # if the ghost can move, if is because its next position is either 11 or 10
+                    new_positions[locations["BLUE"]] = REGULAR_SLOT_NO_COIN
+                if state[*new_locations["BLUE"]] == REGULAR_SLOT_COIN:
+                    new_positions[new_locations["BLUE"]] = BLUE_COIN
+                else:
+                    new_positions[new_locations["BLUE"]] = BLUE
+        # if the yellow ghost is present in the state
+        if new_locations["YELLOW"]:
+            self.calculate_ghost_new_pos(new_locations, "YELLOW")
+            if new_locations["YELLOW"] != locations["YELLOW"]: # if the ghost has moved, add relevant positions
+                # if self.ghost_can_move(state, new_locations, locations["YELLOW"], new_locations["YELLOW"]):
+                if state[*locations["YELLOW"]] == YELLOW_COIN:
+                    new_positions[locations["YELLOW"]] = REGULAR_SLOT_COIN
+                else # if the ghost can move, if is because its next position is either 11 or 10
+                    new_positions[locations["YELLOW"]] = REGULAR_SLOT_NO_COIN
+                if state[*new_locations["YELLOW"]] == REGULAR_SLOT_COIN:
+                    new_positions[new_locations["YELLOW"]] = YELLOW_COIN
+                else:
+                    new_positions[new_locations["YELLOW"]] = YELLOW
+        # if the green ghost is present in the state
+        if new_locations["GREEN"]:
+            self.calculate_ghost_new_pos(new_locations, "GREEN")
+            if new_locations["GREEN"] != locations["GREEN"]: # if the ghost has moved, add relevant positions
+                # if self.ghost_can_move(state, new_locations, locations["GREEN"], new_locations["GREEN"]):
+                if state[*locations["GREEN"]] == GREEN_COIN:
+                    new_positions[locations["GREEN"]] = REGULAR_SLOT_COIN
+                else # if the ghost can move, if is because its next position is either 11 or 10
+                    new_positions[locations["GREEN"]] = REGULAR_SLOT_NO_COIN
+                if state[*new_locations["GREEN"]] == REGULAR_SLOT_COIN:
+                    new_positions[new_locations["GREEN"]] = GREEN_COIN
+                else:
+                    new_positions[new_locations["GREEN"]] = GREEN
+        # return the new positions that need to be changed in the state
+        return new_positions
+
+
     def successor(self, state):
         """ Generates the successor state """
         n : int = len(state) # number of rows
         m : int = len(state[0]) # number of columns
         successor_state_list = []
         # find the locations of pacman and the ghosts
-        locations: dict[tuple] = self.find_locations(state, n, m)
+        locations: dict[str,tuple] = self.find_locations(state, n, m)
         # define the resulting states
         moves_and_states = list[str,tuple]
         # define a resulting state for each move that pacman can make
         player_i, player_j = locations["PACMAN"]
-        if state[player_i + 1][player_j] != 
-
-            
-
+        if state[(player_i + 1) % n][player_j] != WALL: # add state of pacman moving down (circular movement if no walls are present)
+            moves_and_states.append(("D", self.modify_state_tuple(state, self.calculate_new_positions(state, ((player_i + 1) % n, player_j), locations))))
+        if state[(player_i - 1) % n][player_j] != WALL:# add state of pacman moving up (circular movement if no walls are present)
+            moves_and_states.append(("U", self.modify_state_tuple(state, self.calculate_new_positions(state, ((player_i - 1) % n, player_j), locations))))
+        if state[player_i][(player_j + 1) % m] != WALL:# add state of pacman moving right (circular movement if no walls are present)
+            moves_and_states.append(("R", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, (player_j + 1) % m), locations))))
+        if state[player_i][(player_j - 1) % m] != WALL:# add state of pacman moving left (circular movement if no walls are present)
+            moves_and_states.append(("L", self.modify_state_tuple(state, self.calculate_new_positions(state, (player_i, (player_j) - 1 % m), locations))))
         
-        # utils.raiseNotDefined()
+        return moves_and_states
 
     def result(self, state, move):
         """given state and an action and return a new state"""
