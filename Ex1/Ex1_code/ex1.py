@@ -15,8 +15,8 @@ RED_COIN = RED + 1
 BLUE_COIN = BLUE + 1
 YELLOW_COIN = YELLOW + 1
 GREEN_COIN = GREEN + 1
-REGULAR_SLOT_NO_COIN = 10
-REGULAR_SLOT_COIN = 11
+REGULAR_CELL_NO_COIN = 10
+REGULAR_CELL_COIN = 11
 WALL = 99
 INTMAX = 2147483647
 DEAD_PACMAN = 88
@@ -51,36 +51,46 @@ class PacmanProblem(search.Problem):
                     return (i, j)
         return None
 
-    def find_locations(self, state, n, m) -> dict[tuple]:
+    def find_locations(self, state, n, m) -> tuple:
         """
         finds the (i,j) locations of ghosts and pacman in the currents state.
         returns mapping from "RED", "BLUE", "YELLOW", "GREEN", "PACMAN" to corresponding locations
+        also returns the number of coins currently in the state
         """
         locations: dict[str, tuple] = {}
+        coins: int = 0
         for i in range(n):
             for j in range(m):
                 match state[i][j]:
+                    case 88:
+                        locations["DEAD_PACMAN"] = (i, j)
                     case 77:
                         locations["PACMAN"] = (i, j)
                     case 51:
                         locations["GREEN"] = (i, j)
+                        coins += 1
                     case 50:
                         locations["GREEN"] = (i, j)
                     case 41:
                         locations["YELLOW"] = (i, j)
+                        coins += 1
                     case 40:
                         locations["YELLOW"] = (i, j)
                     case 31:
                         locations["BLUE"] = (i, j)
+                        coins += 1
                     case 30:
                         locations["BLUE"] = (i, j)
                     case 21:
                         locations["RED"] = (i, j)
+                        coins += 1
                     case 20:
                         locations["RED"] = (i, j)
+                    case 11:
+                        coins += 1
                     case _:
                         pass
-        return locations
+        return coins, locations
 
     def modify_state_tuple(self, state, new_positions: dict):
         """Modify the state of the tuple with the given changes dictionary"""
@@ -90,7 +100,7 @@ class PacmanProblem(search.Problem):
         return tuple(map(tuple, modified))
 
     def ghost_can_move_pos(
-        self, state, new_locations: dict, curr_ghost_color, new_ghost_pos, n, m
+        self, state, new_locations: dict, locations: dict, curr_ghost_color, new_ghost_pos, n, m
     ):
         """Check if the ghost of color curr_ghost can move to new_ghost_pos"""
         # check if the move is in the matrix
@@ -101,22 +111,35 @@ class PacmanProblem(search.Problem):
             or new_ghost_pos[1] < 0
         ):
             return False
+        
+        # check if new_ghost_pos has anytthink other than PACMAN or a regular cell
         if (
-            state[new_ghost_pos[0]][new_ghost_pos[1]] == WALL
-        ):  # check if the new ghost position has a wall
-            return False
+            state[new_ghost_pos[0]][new_ghost_pos[1]] != PACMAN
+            and state[new_ghost_pos[0]][new_ghost_pos[1]] != REGULAR_CELL_COIN
+            and state[new_ghost_pos[0]][new_ghost_pos[1]] != REGULAR_CELL_NO_COIN
+        ):  # check if the new position has anything but pacman or a ghost-less cell
+            # if so, check if it is a wall. if so, the ghost cannot move there
+            if state[new_ghost_pos[0]][new_ghost_pos[1]] == WALL:
+                return False
+            # otherwise, it is another ghost. check if it has moved already in new locations
+            for ghost_color_i, location_i in locations.items():
+                if location_i == new_ghost_pos:
+                    # if the ghost in the new position has not moved anywhere, current ghost cannot move
+                    if new_locations[ghost_color_i] == location_i:
+                        return False
+        # check if the new locations have a ghost in new_ghost_pos
         for (
             ghost_color_i,
             new_location,
         ) in new_locations.items():  # check for any other ghost in new pos
-            if ghost_color_i != curr_ghost_color:
+            if ghost_color_i != curr_ghost_color and ghost_color_i != "PACMAN":
                 if new_location == new_ghost_pos:
                     return False
-        # if there is no wall or other ghost in the new_ghost_pos, current ghost can move there
+        # if pacman or regular cell in the next position, ghost can move there
         return True
 
     def calculate_ghost_new_pos(
-        self, state, new_locations: dict, curr_ghost_color, n, m
+        self, state, new_locations: dict, locations: dict, curr_ghost_color, n, m
     ):
         """
         calculate the nearest position to pacman in hanhatten distance.
@@ -127,28 +150,28 @@ class PacmanProblem(search.Problem):
         pacman_i, pacman_j = new_locations["PACMAN"]
         # check if can move right
         if self.ghost_can_move_pos(
-            state, new_locations, curr_ghost_color, (ghost_i, ghost_j + 1), n, m
+            state, new_locations, locations, curr_ghost_color, (ghost_i, ghost_j + 1), n, m
         ):
             man_right: int = abs(ghost_i - pacman_i) + abs(ghost_j + 1 - pacman_j)
             if man_right < min_dist_to_pacman[0]:
                 min_dist_to_pacman = (man_right, (ghost_i, ghost_j + 1))
         # check if can move down
         if self.ghost_can_move_pos(
-            state, new_locations, curr_ghost_color, (ghost_i + 1, ghost_j), n, m
+            state, new_locations, locations, curr_ghost_color, (ghost_i + 1, ghost_j), n, m
         ):
             man_down: int = abs(ghost_i + 1 - pacman_i) + abs(ghost_j - pacman_j)
             if man_down < min_dist_to_pacman[0]:
                 min_dist_to_pacman = (man_down, (ghost_i + 1, ghost_j))
         # check if can move left
         if self.ghost_can_move_pos(
-            state, new_locations, curr_ghost_color, (ghost_i, ghost_j - 1), n, m
+            state, new_locations, locations, curr_ghost_color, (ghost_i, ghost_j - 1), n, m
         ):
             man_left: int = abs(ghost_i - pacman_i) + abs(ghost_j - 1 - pacman_j)
             if man_left < min_dist_to_pacman[0]:
                 min_dist_to_pacman = (man_left, (ghost_i, ghost_j - 1))
         # check if can move up
         if self.ghost_can_move_pos(
-            state, new_locations, curr_ghost_color, (ghost_i - 1, ghost_j), n, m
+            state, new_locations, locations, curr_ghost_color, (ghost_i - 1, ghost_j), n, m
         ):
             man_up: int = abs(ghost_i - 1 - pacman_i) + abs(ghost_j - pacman_j)
             if man_up < min_dist_to_pacman[0]:
@@ -159,114 +182,109 @@ class PacmanProblem(search.Problem):
         # define the new position of the ghost - nearest position with relation to manhatten distance
         new_locations[curr_ghost_color] = min_dist_to_pacman[1]
 
+    def add_positions(
+        self,
+        state,
+        new_positions,
+        locations,
+        new_locations,
+        ghost_color,
+        ghost_coin,
+        ghost_no_coin,
+        n,
+        m,
+    ):
+        """Calculate the new positions to update in the next state and add them to new_positions"""
+        self.calculate_ghost_new_pos(state, new_locations, locations, ghost_color, n, m)
+        if (
+            new_locations[ghost_color] != locations[ghost_color]
+        ):  # if the ghost has moved, add relevant positions
+            if (
+                state[locations[ghost_color][0]][locations[ghost_color][1]]
+                == ghost_coin
+            ):
+                new_positions[locations[ghost_color]] = REGULAR_CELL_COIN
+            else:  # if the ghost can move, its former position was either with coin or without coin
+                new_positions[locations[ghost_color]] = REGULAR_CELL_NO_COIN
+            # check if pacman is in the next ghost's position
+            if new_locations[ghost_color] == new_locations["PACMAN"]:
+                new_positions[new_locations[ghost_color]] = DEAD_PACMAN
+            elif ( # check if the next location has a coin and is not pacman
+                state[new_locations[ghost_color][0]][new_locations[ghost_color][1]]
+                in { REGULAR_CELL_COIN, RED_COIN, BLUE_COIN, GREEN_COIN, YELLOW_COIN }
+            ):
+                new_positions[new_locations[ghost_color]] = ghost_coin
+            else: # if got here it's a regular slot with no coins
+                new_positions[new_locations[ghost_color]] = ghost_no_coin
+
     def calculate_new_positions(
         self, state, player_new_pos, player_old_pos, locations, n, m
     ):
         new_positions: dict[tuple, int] = {}
         # calculate the new state positions of pacman
-        if state[player_old_pos[0]][player_old_pos[1]] == RED_COIN:
-            new_positions[player_old_pos] = REGULAR_SLOT_COIN
-        else:  # if the ghost can move, it is because its next position is either 11 or 10
-            new_positions[player_old_pos] = REGULAR_SLOT_NO_COIN
+        new_positions[(player_old_pos[0],player_old_pos[1])] = REGULAR_CELL_NO_COIN
         if (
-            state[player_new_pos[0]][player_new_pos[1]] == REGULAR_SLOT_COIN
-            or state[player_new_pos[0]][player_new_pos[1]] == REGULAR_SLOT_NO_COIN
+            state[player_new_pos[0]][player_new_pos[1]] == REGULAR_CELL_COIN
+            or state[player_new_pos[0]][player_new_pos[1]] == REGULAR_CELL_NO_COIN
         ):
             new_positions[player_new_pos] = PACMAN
         else:  # if no wall, coin or no coin, then there is a ghost
-            new_positions[player_new_pos] = DEAD_PACMAN
-
+            new_positions[player_new_pos] = DEAD_PACMAN 
         new_locations: dict[str, tuple] = self.deep_copy_dict(locations)
         # define the new pacman position in the new state
         new_locations["PACMAN"] = player_new_pos
         # if the red ghost is present in the state
         if "RED" in new_locations:
-            self.calculate_ghost_new_pos(state, new_locations, "RED", n, m)
-            if (
-                new_locations["RED"] != locations["RED"]
-            ):  # if the ghost has moved, add relevant positions
-                if state[locations["RED"][0]][locations["RED"][1]] == RED_COIN:
-                    new_positions[locations["RED"]] = REGULAR_SLOT_COIN
-                else:  # if the ghost can move, its former position was either with coin or without coin
-                    new_positions[locations["RED"]] = REGULAR_SLOT_NO_COIN
-                if (
-                    state[new_locations["RED"][0]][new_locations["RED"][1]]
-                    == REGULAR_SLOT_COIN
-                ):
-                    new_positions[new_locations["RED"]] = RED_COIN
-                elif (
-                    state[new_locations["RED"][0]][new_locations["RED"][1]]
-                    == REGULAR_SLOT_NO_COIN
-                ):
-                    new_positions[new_locations["RED"]] = RED
-                else:  # no wall, ghost or regular tile, so pacman was in the tile
-                    new_positions[new_locations["RED"]] = DEAD_PACMAN
+            self.add_positions(
+                state,
+                new_positions,
+                locations,
+                new_locations,
+                "RED",
+                RED_COIN,
+                RED,
+                n,
+                m,
+            )
         # if the blue ghost is present in the state
         if "BLUE" in new_locations:
-            self.calculate_ghost_new_pos(state, new_locations, "BLUE", n, m)
-            if (
-                new_locations["BLUE"] != locations["BLUE"]
-            ):  # if the ghost has moved, add relevant positions
-                if state[locations["BLUE"][0]][locations["BLUE"][1]] == BLUE_COIN:
-                    new_positions[locations["BLUE"]] = REGULAR_SLOT_COIN
-                else:  # if the ghost can move, its former position was either with coin or without coin
-                    new_positions[locations["BLUE"]] = REGULAR_SLOT_NO_COIN
-                if (
-                    state[new_locations["BLUE"][0]][new_locations["BLUE"][1]]
-                    == REGULAR_SLOT_COIN
-                ):
-                    new_positions[new_locations["BLUE"]] = BLUE_COIN
-                elif (
-                    state[new_locations["BLUE"][0]][new_locations["BLUE"][1]]
-                    == REGULAR_SLOT_NO_COIN
-                ):
-                    new_positions[new_locations["BLUE"]] = BLUE
-                else:  # no wall, ghost or regular tile, so pacman was in the tile
-                    new_positions[new_locations["RED"]] = DEAD_PACMAN
+            self.add_positions(
+                state,
+                new_positions,
+                locations,
+                new_locations,
+                "BLUE",
+                BLUE_COIN,
+                BLUE,
+                n,
+                m,
+            )
         # if the yellow ghost is present in the state
         if "YELLOW" in new_locations:
-            self.calculate_ghost_new_pos(state, new_locations, "YELLOW", n, m)
-            if (
-                new_locations["YELLOW"] != locations["YELLOW"]
-            ):  # if the ghost has moved, add relevant positions
-                if state[locations["YELLOW"][0]][locations["YELLOW"][1]] == YELLOW_COIN:
-                    new_positions[locations["YELLOW"]] = REGULAR_SLOT_COIN
-                else:  # if the ghost can move, its former position was either with coin or without coin
-                    new_positions[locations["YELLOW"]] = REGULAR_SLOT_NO_COIN
-                if (
-                    state[new_locations["YELLOW"][0]][new_locations["YELLOW"][1]]
-                    == REGULAR_SLOT_COIN
-                ):
-                    new_positions[new_locations["YELLOW"]] = YELLOW_COIN
-                elif (
-                    state[new_locations["YELLOW"][0]][new_locations["YELLOW"][1]]
-                    == REGULAR_SLOT_NO_COIN
-                ):
-                    new_positions[new_locations["YELLOW"]] = YELLOW
-                else:  # no wall, ghost or regular tile, so pacman was in the tile
-                    new_positions[new_locations["RED"]] = DEAD_PACMAN
+            self.add_positions(
+                state,
+                new_positions,
+                locations,
+                new_locations,
+                "YELLOW",
+                YELLOW_COIN,
+                YELLOW,
+                n,
+                m,
+            )
         # if the green ghost is present in the state
         if "GREEN" in new_locations:
-            self.calculate_ghost_new_pos(state, new_locations, "GREEN", n, m)
-            if (
-                new_locations["GREEN"] != locations["GREEN"]
-            ):  # if the ghost has moved, add relevant positions
-                if state[locations["GREEN"][0]][locations["GREEN"][1]] == GREEN_COIN:
-                    new_positions[locations["GREEN"]] = REGULAR_SLOT_COIN
-                else:  # if the ghost can move, its former position was either with coin or without coin
-                    new_positions[locations["GREEN"]] = REGULAR_SLOT_NO_COIN
-                if (
-                    state[new_locations["GREEN"][0]][new_locations["GREEN"][1]]
-                    == REGULAR_SLOT_COIN
-                ):
-                    new_positions[new_locations["GREEN"]] = GREEN_COIN
-                elif (
-                    state[new_locations["GREEN"][0]][new_locations["GREEN"][1]]
-                    == REGULAR_SLOT_NO_COIN
-                ):
-                    new_positions[new_locations["GREEN"]] = GREEN
-                else:  # no wall, ghost or regular tile, so pacman was in the tile
-                    new_positions[new_locations["RED"]] = DEAD_PACMAN
+            self.add_positions(
+                state,
+                new_positions,
+                locations,
+                new_locations,
+                "GREEN",
+                GREEN_COIN,
+                GREEN,
+                n,
+                m,
+            )
         # return the new positions that need to be changed in the state
         return new_positions
 
@@ -275,9 +293,12 @@ class PacmanProblem(search.Problem):
         n: int = len(state)  # number of rows
         m: int = len(state[0])  # number of columns
         # find the locations of pacman and the ghosts
-        locations: dict[str, tuple] = self.find_locations(state, n, m)
+        locations: dict[str, tuple]
+        _, locations = self.find_locations(state, n, m)
         # define the resulting states
         moves_and_states: list[tuple] = []
+        if "PACMAN" not in locations: # if pacman is dead, no successors
+            return moves_and_states
         # define a resulting state for each move that pacman can make
         player_i, player_j = locations["PACMAN"]
         if (
@@ -364,12 +385,21 @@ class PacmanProblem(search.Problem):
         n: int = len(state)  # number of rows
         m: int = len(state[0])  # number of columns
         # find the locations of pacman and the ghosts
-        locations: dict[str, tuple] = self.find_locations(state, n, m)
+        locations: dict[str, tuple]
+        _, locations = self.find_locations(state, n, m)
         # utils.raiseNotDefined()
 
     def goal_test(self, state):
         """given a state, checks if this is the goal state, compares to the created goal state"""
-        
+        n: int = len(state)  # number of rows
+        m: int = len(state[0])  # number of columns
+        # find the locations of pacman and the ghosts
+        locations: dict[str, tuple]
+        coins, locations = self.find_locations(state, n, m)
+        if coins == 0 and "PACMAN" in locations:
+            return True
+        return False
+
         # utils.raiseNotDefined()
 
     def h(self, node):
