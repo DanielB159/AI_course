@@ -56,8 +56,8 @@ problem2 = ((21,31,41,11,11,11,11,11,11,11,11,11),
 #solution2: len(solution) = 98
 
 def main():
-    problem = problem2 #or problem2
-    algorithm = "gbfs" #or "astar"
+    problem = problem2#or problem2
+    algorithm = "astar" #or "astar"
 
     solve_problems(problem, algorithm)
 
