@@ -30,7 +30,9 @@ class PacmanProblem(search.Problem):
         """Magic numbers for ghosts and Packman:
         2 - red, 3 - blue, 4 - yellow, 5 - green and 7 - Packman."""
 
-        self.locations = dict.fromkeys(("PACMAN", "DEAD_PACMAN", "GREEN", "BLUE", "RED", "YELLOW", "COINS"))
+        self.locations = dict.fromkeys(
+            ("PACMAN", "DEAD_PACMAN", "GREEN", "BLUE", "RED", "YELLOW", "COINS", "STATE")
+        )
         self.dead_end = False
 
         """ Constructor only needs the initial state.
@@ -60,6 +62,7 @@ class PacmanProblem(search.Problem):
         """
         self.locations["PACMAN"] = None
         self.locations["DEAD_PACMAN"] = None
+        self.locations["STATE"] = state
         coins: int = 0
         for i in range(n):
             for j in range(m):
@@ -249,9 +252,7 @@ class PacmanProblem(search.Problem):
             else:  # if got here it's a regular slot with no coins
                 new_positions[new_locations[ghost_color]] = ghost_no_coin
 
-    def calculate_new_positions(
-        self, state, player_new_pos, player_old_pos, n, m
-    ):
+    def calculate_new_positions(self, state, player_new_pos, player_old_pos, n, m):
         new_positions: dict[tuple, int] = {}
         # calculate the new state positions of pacman
         new_positions[(player_old_pos[0], player_old_pos[1])] = REGULAR_CELL_NO_COIN
@@ -402,7 +403,11 @@ class PacmanProblem(search.Problem):
         # locations: dict[str, tuple]
         self.find_locations(state, n, m)
         coins = self.locations["COINS"]
-        if coins == 0 and self.locations["PACMAN"] is not None and self.locations["DEAD_PACMAN"] is None:
+        if (
+            coins == 0
+            and self.locations["PACMAN"] is not None
+            and self.locations["DEAD_PACMAN"] is None
+        ):
             return True
         return False
 
@@ -440,6 +445,33 @@ class PacmanProblem(search.Problem):
                         )
         return near_ghost_sum
 
+    def find_pacman_new_state(self, new_state, action) -> tuple:
+        # check if pacman was in the state prior to this move
+        if self.locations["PACMAN"] is None or self.locations["DEAD_PACMAN"] is not None:
+            return (-1, -1)
+        pacman_i, pacman_j = self.locations["PACMAN"]
+        pacman_i_new : int
+        pacman_j_new : int
+        # find the new state of pacman
+        match action:
+            case "R":
+                pacman_i_new = pacman_i
+                pacman_j_new = pacman_j + 1
+            case "D":
+                pacman_i_new = pacman_i + 1
+                pacman_j_new = pacman_j
+            case "L":
+                pacman_i_new = pacman_i
+                pacman_j_new = pacman_j - 1
+            case "U":
+                pacman_i_new = pacman_i - 1
+                pacman_j_new = pacman_j
+        if new_state[pacman_i_new][pacman_j_new] != 77:
+            return (-1, -1)
+        return (pacman_i_new, pacman_j_new)
+
+        # if new_state[pacman_i - 1][pacman]
+
     def h(self, node):
         """This is the heuristic. It get a node (not a state)
         and returns a goal distance estimate"""
@@ -447,48 +479,50 @@ class PacmanProblem(search.Problem):
         n: int = len(state)  # number of rows
         m: int = len(state[0])  # number of columns
         # find the locations of pacman and the ghosts
-        if self.locations["PACMAN"] is None or self.locations["DEAD_PACMAN"] is not None:
+        pacman_i_new, pacman_j_new = self.find_pacman_new_state(state, node.action)
+        if pacman_i_new == -1:
             return INFINITY
         coins = self.locations["COINS"]
-        return coins
-        # pacman_i, pacman_j = self.locations["PACMAN"]
-        # coins = 0
-        # pacman_i = 
-        # pacman_j = -1
-        # found_pacman = False
-        # find pacman
-        # for i in range(n):
-        #     for j in range(m):
-        #         item = state[i][j]
-        #         if item == 77:
-        #             pacman_i, pacman_j = i, j
-        #         if item % 10 == 1:
-        #             coins += 1
-        # if pacman is dead, return infinity (INTMAX), if goal state, return 0 (goal aware)
-        # if pacman_j == -1:
-        #     return INFINITY
+        # make the heuristic goal aware
+        if coins == 0:
+            return 0
+        # check if in this state pacman has eaten a coin
+        if self.locations["STATE"][pacman_i_new][pacman_j_new] % 10 == 1:
+            coins -= 1
+        # if coins == 0:
+        #     return coins
+        # return coins
         # calculate thefurthest manhatten distance coin and the shortest manhatten distance coin
-        # # furthest_distance: int = 0
-        # shortest_distance: int = INFINITY
-
-        # # make the manhatten distance matrix and find the coin with the maximum distance distance from pacman
+        furthest_distance: int = 0
+        shortest_distance: int = INFINITY
+        coin_weighed_sum: int = 0
+        # make the manhatten distance matrix and find the coin with the maximum distance distance from pacman
+        for i in range(n):
+            for j in range(m):
+                item = state[i][j]
+                if item % 10 == 1:
+                    distance = abs(i - pacman_i_new) + abs(j - pacman_j_new)
+                    if distance > furthest_distance:
+                        furthest_distance = distance
+                    if distance < shortest_distance:
+                        shortest_distance = distance
+                    # distance_sum += abs(i - pacman_i) + abs(j - pacman_j)
         # for i in range(n):
         #     for j in range(m):
         #         item = state[i][j]
         #         if item % 10 == 1:
-        #             distance = abs(i - pacman_i) + abs(j - pacman_j)
-        #             # if distance > furthest_distance:
-        #             #     furthest_distance = distance
-        #             if distance < shortest_distance:
-        #                 shortest_distance = distance
+        #             distance = abs(i - pacman_i_new) + abs(j - pacman_j_new)
+        #             coin_weighed_sum += distance
+
+        return furthest_distance + coins
         # keep the heuristic goal aware
-        if coins == 0:
-            return 0
-        return coins
-        coins_weighed_sum = self.h_coin_weighed_sum(state, n, m, pacman_i, pacman_j)
-        if coins == 0:
-            return 0
-        return  self.h_ghost_sum(state, n, m, pacman_i, pacman_j)
+        # if coins == 0:
+        #     return 0
+        # return coins
+        # coins_weighed_sum = self.h_coin_weighed_sum(state, n, m, pacman_i, pacman_j)
+        # if coins == 0:
+        #     return 0
+        # return  self.h_ghost_sum(state, n, m, pacman_i, pacman_j)
         # utils.raiseNotDefined()
 
 

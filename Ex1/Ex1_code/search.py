@@ -156,6 +156,7 @@ def graph_search(problem, fringe):
     while fringe:
         node = fringe.pop()
         if problem.goal_test(node.state):
+            print("expanded", expanded, "nodes")
             return node, expanded
         if node.state not in closed:
             closed[node.state] = True
