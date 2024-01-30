@@ -5,6 +5,7 @@ import utils
 id = 315113159
 
 """ Rules """
+# state indexes
 RED = 20
 BLUE = 30
 YELLOW = 40
@@ -22,6 +23,16 @@ INTMAX = 2147483647
 INFINITY = utils.infinity
 DEAD_PACMAN = 88
 
+# character indexes
+PACMAN_CHARACTER = 7
+DEAD_PACMAN_CHARACTER = 8
+RED_GHOST = 2
+BLUE_GHOST = 3
+YELLOW_GHOST = 4
+GREEN_GHOST = 5
+COINS = 10
+STATE = 12
+
 
 class PacmanProblem(search.Problem):
     """This class implements a pacman problem"""
@@ -31,7 +42,7 @@ class PacmanProblem(search.Problem):
         2 - red, 3 - blue, 4 - yellow, 5 - green and 7 - Packman."""
 
         self.locations = dict.fromkeys(
-            ("PACMAN", "DEAD_PACMAN", "GREEN", "BLUE", "RED", "YELLOW", "COINS", "STATE")
+            (PACMAN_CHARACTER, DEAD_PACMAN_CHARACTER, GREEN_GHOST, BLUE_GHOST, RED_GHOST, YELLOW_GHOST, COINS, STATE)
         )
         self.dead_end = False
 
@@ -60,42 +71,42 @@ class PacmanProblem(search.Problem):
         returns mapping from "RED", "BLUE", "YELLOW", "GREEN", "PACMAN" to corresponding locations
         also returns the number of coins currently in the state
         """
-        self.locations["PACMAN"] = None
-        self.locations["DEAD_PACMAN"] = None
-        self.locations["STATE"] = state
+        self.locations[PACMAN_CHARACTER] = None
+        self.locations[DEAD_PACMAN_CHARACTER] = None
+        self.locations[STATE] = state
         coins: int = 0
         for i in range(n):
             for j in range(m):
                 match state[i][j]:
                     case 88:
-                        self.locations["DEAD_PACMAN"] = (i, j)
+                        self.locations[DEAD_PACMAN_CHARACTER] = (i, j)
                     case 77:
-                        self.locations["PACMAN"] = (i, j)
+                        self.locations[PACMAN_CHARACTER] = (i, j)
                     case 51:
-                        self.locations["GREEN"] = (i, j)
+                        self.locations[GREEN_GHOST] = (i, j)
                         coins += 1
                     case 50:
-                        self.locations["GREEN"] = (i, j)
+                        self.locations[GREEN_GHOST] = (i, j)
                     case 41:
-                        self.locations["YELLOW"] = (i, j)
+                        self.locations[YELLOW_GHOST] = (i, j)
                         coins += 1
                     case 40:
-                        self.locations["YELLOW"] = (i, j)
+                        self.locations[YELLOW_GHOST] = (i, j)
                     case 31:
-                        self.locations["BLUE"] = (i, j)
+                        self.locations[BLUE_GHOST] = (i, j)
                         coins += 1
                     case 30:
-                        self.locations["BLUE"] = (i, j)
+                        self.locations[BLUE_GHOST] = (i, j)
                     case 21:
-                        self.locations["RED"] = (i, j)
+                        self.locations[RED_GHOST] = (i, j)
                         coins += 1
                     case 20:
-                        self.locations["RED"] = (i, j)
+                        self.locations[RED_GHOST] = (i, j)
                     case 11:
                         coins += 1
                     case _:
                         pass
-        self.locations["COINS"] = coins
+        self.locations[COINS] = coins
 
     def modify_state_tuple(self, state, new_positions: dict):
         """Modify the state of the tuple with the given changes dictionary"""
@@ -143,7 +154,7 @@ class PacmanProblem(search.Problem):
             ghost_color_i,
             new_location,
         ) in new_locations.items():  # check for any other ghost in new pos
-            if ghost_color_i != curr_ghost_color and ghost_color_i != "PACMAN":
+            if ghost_color_i != curr_ghost_color and ghost_color_i != PACMAN_CHARACTER:
                 if new_location == new_ghost_pos:
                     return False
         # if pacman or regular cell in the next position, ghost can move there
@@ -158,7 +169,7 @@ class PacmanProblem(search.Problem):
         """
         min_dist_to_pacman: tuple = (INFINITY, None)
         ghost_i, ghost_j = new_locations[curr_ghost_color]
-        pacman_i, pacman_j = new_locations["PACMAN"]
+        pacman_i, pacman_j = new_locations[PACMAN_CHARACTER]
         # check if can move right
         if self.ghost_can_move_pos(
             state,
@@ -237,7 +248,7 @@ class PacmanProblem(search.Problem):
             else:  # if the ghost can move, its former position was either with coin or without coin
                 new_positions[self.locations[ghost_color]] = REGULAR_CELL_NO_COIN
             # check if pacman is in the next ghost's position
-            if new_locations[ghost_color] == new_locations["PACMAN"]:
+            if new_locations[ghost_color] == new_locations[PACMAN_CHARACTER]:
                 new_positions[new_locations[ghost_color]] = DEAD_PACMAN
             elif state[  # check if the next location has a coin and is not pacman
                 new_locations[ghost_color][0]
@@ -265,50 +276,50 @@ class PacmanProblem(search.Problem):
             new_positions[player_new_pos] = DEAD_PACMAN
         new_locations: dict[str, tuple] = self.deep_copy_dict(self.locations)
         # define the new pacman position in the new state
-        new_locations["PACMAN"] = player_new_pos
+        new_locations[PACMAN_CHARACTER] = player_new_pos
         # if the red ghost is present in the state
-        if new_locations["RED"] is not None:
+        if new_locations[RED_GHOST] is not None:
             self.add_positions(
                 state,
                 new_positions,
                 new_locations,
-                "RED",
+                RED_GHOST,
                 RED_COIN,
                 RED,
                 n,
                 m,
             )
         # if the blue ghost is present in the state
-        if new_locations["BLUE"] is not None:
+        if new_locations[BLUE_GHOST] is not None:
             self.add_positions(
                 state,
                 new_positions,
                 new_locations,
-                "BLUE",
+                BLUE_GHOST,
                 BLUE_COIN,
                 BLUE,
                 n,
                 m,
             )
         # if the yellow ghost is present in the state
-        if new_locations["YELLOW"] is not None:
+        if new_locations[YELLOW_GHOST] is not None:
             self.add_positions(
                 state,
                 new_positions,
                 new_locations,
-                "YELLOW",
+                YELLOW_GHOST,
                 YELLOW_COIN,
                 YELLOW,
                 n,
                 m,
             )
         # if the green ghost is present in the state
-        if new_locations["GREEN"] is not None:
+        if new_locations[GREEN_GHOST] is not None:
             self.add_positions(
                 state,
                 new_positions,
                 new_locations,
-                "GREEN",
+                GREEN_GHOST,
                 GREEN_COIN,
                 GREEN,
                 n,
@@ -326,10 +337,10 @@ class PacmanProblem(search.Problem):
         # self.find_locations(state, n, m)
         # define the resulting states
         moves_and_states: list[tuple] = []
-        if self.locations["PACMAN"] is None:  # if pacman is dead, no successors
+        if self.locations[PACMAN_CHARACTER] is None:  # if pacman is dead, no successors
             return moves_and_states
         # define a resulting state for each move that pacman can make
-        player_i, player_j = self.locations["PACMAN"]
+        player_i, player_j = self.locations[PACMAN_CHARACTER]
         if (
             player_i + 1 < n and state[player_i + 1][player_j] != WALL
         ):  # add state of pacman moving down
@@ -357,9 +368,9 @@ class PacmanProblem(search.Problem):
         # locations: dict[str, tuple]
         self.find_locations(state, n, m)
         # make sure that pacman is in the map
-        if "PACMAN" not in self.locations:
+        if self.locations[PACMAN_CHARACTER] is None:
             return state
-        player_i, player_j = self.locations["PACMAN"]
+        player_i, player_j = self.locations[PACMAN_CHARACTER]
         player_i_new: int = None
         player_j_new: int = None
         # calculate the new (i,j) location of pacman
@@ -389,7 +400,7 @@ class PacmanProblem(search.Problem):
             self.calculate_new_positions(
                 state,
                 (player_i_new, player_j_new),
-                self.locations["PACMAN"],
+                self.locations[PACMAN_CHARACTER],
                 n,
                 m,
             ),
@@ -402,11 +413,11 @@ class PacmanProblem(search.Problem):
         # find the locations of pacman and the ghosts
         # locations: dict[str, tuple]
         self.find_locations(state, n, m)
-        coins = self.locations["COINS"]
+        coins = self.locations[COINS]
         if (
             coins == 0
-            and self.locations["PACMAN"] is not None
-            and self.locations["DEAD_PACMAN"] is None
+            and self.locations[PACMAN_CHARACTER] is not None
+            and self.locations[DEAD_PACMAN_CHARACTER] is None
         ):
             return True
         return False
@@ -447,9 +458,9 @@ class PacmanProblem(search.Problem):
 
     def find_pacman_new_state(self, new_state, action) -> tuple:
         # check if pacman was in the state prior to this move
-        if self.locations["PACMAN"] is None or self.locations["DEAD_PACMAN"] is not None:
+        if self.locations[PACMAN_CHARACTER] is None or self.locations[DEAD_PACMAN_CHARACTER] is not None:
             return (-1, -1)
-        pacman_i, pacman_j = self.locations["PACMAN"]
+        pacman_i, pacman_j = self.locations[PACMAN_CHARACTER]
         pacman_i_new : int
         pacman_j_new : int
         # find the new state of pacman
@@ -482,12 +493,12 @@ class PacmanProblem(search.Problem):
         pacman_i_new, pacman_j_new = self.find_pacman_new_state(state, node.action)
         if pacman_i_new == -1:
             return INFINITY
-        coins = self.locations["COINS"]
+        coins = self.locations[COINS]
         # make the heuristic goal aware
         if coins == 0:
             return 0
         # check if in this state pacman has eaten a coin
-        if self.locations["STATE"][pacman_i_new][pacman_j_new] % 10 == 1:
+        if self.locations[STATE][pacman_i_new][pacman_j_new] % 10 == 1:
             coins -= 1
         # if coins == 0:
         #     return coins
