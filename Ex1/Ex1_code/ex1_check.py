@@ -106,7 +106,7 @@ problem8 = (
             (99, 10, 99, 10, 99, 10, 40, 99),
         )
 def main():
-    problem = problem7 #or problem2
+    problem = problem2 #or problem2
     algorithm = "astar" #or "astar"
 
     solve_problems(problem, algorithm)
