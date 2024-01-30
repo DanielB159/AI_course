@@ -5,6 +5,7 @@ import search
 from ex1_check import run_problem
 
 
+
 def solve_problems(problem, algorithm):
     for row in problem:
         print(row),
