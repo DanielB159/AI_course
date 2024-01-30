@@ -386,7 +386,7 @@ class PacmanProblem(search.Problem):
         m: int = len(state[0])  # number of columns
         # find the locations of pacman and the ghosts
         # locations: dict[str, tuple]
-        self.find_locations(state, n, m)
+        # self.find_locations(state, n, m)
         # make sure that pacman is in the map
         if self.locations[PACMAN_CHARACTER] is None:
             return state
@@ -510,8 +510,8 @@ class PacmanProblem(search.Problem):
         """This is the heuristic. It get a node (not a state)
         and returns a goal distance estimate"""
         state = node.state
-        n: int = len(state)  # number of rows
-        m: int = len(state[0])  # number of columns
+        # n: int = len(state)  # number of rows
+        # m: int = len(state[0])  # number of columns
         # find the locations of pacman and the ghosts
         pacman_i_new, pacman_j_new = self.find_pacman_new_state(state, node.action)
         if pacman_i_new == -1:
@@ -547,18 +547,11 @@ class PacmanProblem(search.Problem):
         # return coins
         # calculate thefurthest manhatten distance coin and the shortest manhatten distance coin
         furthest_distance: int = 0
-        shortest_distance: int = INFINITY
-        coin_weighed_sum: int = 0
         # make the manhatten distance matrix and find the coin with the maximum distance distance from pacman
         for (i, j) in coin_locations:
             distance = abs(i - pacman_i_new) + abs(j - pacman_j_new)
             if distance > furthest_distance:
                 furthest_distance = distance
-            if distance < shortest_distance:
-                shortest_distance = distance
-        for (i, j) in coin_locations:
-            distance = abs(i - pacman_i_new) + abs(j - pacman_j_new)
-            coin_weighed_sum += distance
         
         # for i in range(n):
         #     for j in range(m):

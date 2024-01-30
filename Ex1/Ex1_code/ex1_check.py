@@ -107,7 +107,7 @@ problem8 = (
         )
 def main():
     problem = problem2 #or problem2
-    algorithm = "astar" #or "astar"
+    algorithm = "gbfs" #or "astar"
 
     solve_problems(problem, algorithm)
 
