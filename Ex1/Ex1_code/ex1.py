@@ -354,7 +354,7 @@ class PacmanProblem(search.Problem):
         m: int = len(state[0])  # number of columns
         # find the locations of pacman and the ghosts
         # locations: dict[str, tuple]
-        # self.find_locations(state, n, m)
+        self.find_locations(state, n, m)
         # define the resulting states
         moves_and_states: list[tuple] = []
         if self.locations[PACMAN_CHARACTER] is None:  # if pacman is dead, no successors
@@ -386,7 +386,7 @@ class PacmanProblem(search.Problem):
         m: int = len(state[0])  # number of columns
         # find the locations of pacman and the ghosts
         # locations: dict[str, tuple]
-        # self.find_locations(state, n, m)
+        self.find_locations(state, n, m)
         # make sure that pacman is in the map
         if self.locations[PACMAN_CHARACTER] is None:
             return state
@@ -509,13 +509,19 @@ class PacmanProblem(search.Problem):
     def h(self, node):
         """This is the heuristic. It get a node (not a state)
         and returns a goal distance estimate"""
-        state = node.state
-        # n: int = len(state)  # number of rows
-        # m: int = len(state[0])  # number of columns
         # find the locations of pacman and the ghosts
-        pacman_i_new, pacman_j_new = self.find_pacman_new_state(state, node.action)
-        if pacman_i_new == -1:
+        state = node.state
+        n: int = len(state)  # number of rows
+        m: int = len(state[0])  # number of columns
+        self.find_locations(state, n, m)
+        # find the locations of pacman and the ghosts
+        # pacman_i_new, pacman_j_new = self.find_pacman_new_state(state, node.action)
+        if self.locations[PACMAN_CHARACTER] is None:
             return INFINITY
+        pacman_i_new, pacman_j_new = self.locations[PACMAN_CHARACTER]
+        
+        # if pacman_i_new == -1:
+        #     return INFINITY
         coin_locations = self.locations[COINS_LOCATIONS]
         coins = len(coin_locations)
         # make the heuristic goal aware
@@ -570,7 +576,7 @@ class PacmanProblem(search.Problem):
         #             distance = abs(i - pacman_i_new) + abs(j - pacman_j_new)
         #             coin_weighed_sum += distance
 
-        return furthest_distance + coins
+        return max(furthest_distance, coins)
         # keep the heuristic goal aware
         # if coins == 0:
         #     return 0
