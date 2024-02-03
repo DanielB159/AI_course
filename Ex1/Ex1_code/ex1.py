@@ -50,7 +50,6 @@ class PacmanProblem(search.Problem):
                 BLUE_GHOST,
                 RED_GHOST,
                 YELLOW_GHOST,
-                COINS,
                 STATE,
                 COINS_LOCATIONS
             )
@@ -132,18 +131,18 @@ class PacmanProblem(search.Problem):
             return False
 
         # check if new_ghost_pos has anything other than PACMAN or a regular cell
-        ghost_cell = state[new_ghost_pos[0]][new_ghost_pos[1]]
+        ghost_new_cell = state[new_ghost_pos[0]][new_ghost_pos[1]]
         if (
-            ghost_cell != PACMAN
-            and ghost_cell != REGULAR_CELL_COIN
-            and ghost_cell != REGULAR_CELL_NO_COIN
+            ghost_new_cell != PACMAN
+            and ghost_new_cell != REGULAR_CELL_COIN
+            and ghost_new_cell != REGULAR_CELL_NO_COIN
         ):  # check if the new position has anything but pacman or a ghost-less cell
             # if so, check if it is a wall. if so, the ghost cannot move there
-            if ghost_cell == WALL:
+            if ghost_new_cell == WALL:
                 return False
             # otherwise, it is another ghost. check if it has moved already in new locations
             for ghost_color_i, location_i in self.locations.items():
-                if location_i == new_ghost_pos:
+                if location_i == new_ghost_pos and ghost_color_i not in {PACMAN_CHARACTER, DEAD_PACMAN_CHARACTER, COINS_LOCATIONS, STATE}:
                     # if the ghost in the new position has not moved anywhere, current ghost cannot move
                     if new_locations[ghost_color_i] == location_i:
                         return False
@@ -152,7 +151,7 @@ class PacmanProblem(search.Problem):
             ghost_color_i,
             new_location,
         ) in new_locations.items():  # check for any other ghost in new pos
-            if ghost_color_i != curr_ghost_color and ghost_color_i != PACMAN_CHARACTER:
+            if ghost_color_i != curr_ghost_color and ghost_color_i not in {PACMAN_CHARACTER, DEAD_PACMAN_CHARACTER, COINS_LOCATIONS, STATE}:
                 if new_location == new_ghost_pos:
                     return False
         # if pacman or regular cell in the next position, ghost can move there
