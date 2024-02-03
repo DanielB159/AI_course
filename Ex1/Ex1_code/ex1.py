@@ -237,18 +237,18 @@ class PacmanProblem(search.Problem):
         """Calculate the new positions to update in the next state and add them to new_positions"""
         self.calculate_ghost_new_pos(state, new_locations, ghost_color, n, m)
         new_ghost_color = new_locations[ghost_color]
-        old_chost_color = self.locations[ghost_color]
+        old_ghost_color = self.locations[ghost_color]
         
         if (
-            new_ghost_color != old_chost_color
+            new_ghost_color != old_ghost_color
         ):  # if the ghost has moved, add relevant positions
             if (
-                state[old_chost_color[0]][old_chost_color[1]]
+                state[old_ghost_color[0]][old_ghost_color[1]]
                 == ghost_coin
             ):
-                new_positions[old_chost_color] = REGULAR_CELL_COIN
+                new_positions[old_ghost_color] = REGULAR_CELL_COIN
             else:  # if the ghost can move, its former position was either with coin or without coin
-                new_positions[old_chost_color] = REGULAR_CELL_NO_COIN
+                new_positions[old_ghost_color] = REGULAR_CELL_NO_COIN
             # check if pacman is in the next ghost's position
             if new_ghost_color == new_locations[PACMAN_CHARACTER]:
                 new_positions[new_ghost_color] = DEAD_PACMAN
