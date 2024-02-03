@@ -83,21 +83,20 @@ class PacmanProblem(search.Problem):
 
         for i in range(n):
             for j in range(m):
-                match (state[i][j] // 10):
-                    case 8:
-                        self.locations[DEAD_PACMAN_CHARACTER] = (i, j)
-                    case 7:
-                        self.locations[PACMAN_CHARACTER] = (i, j)
-                    case 5:
-                        self.locations[GREEN_GHOST] = (i, j)
-                    case 4:
-                        self.locations[YELLOW_GHOST] = (i, j)
-                    case 3:
-                        self.locations[BLUE_GHOST] = (i, j)
-                    case 2:
-                        self.locations[RED_GHOST] = (i, j)
-                    case _:
-                        pass
+                comp = (state[i][j] // 10)
+                if comp == 8:
+                    self.locations[DEAD_PACMAN_CHARACTER] = (i, j)
+                elif comp == 7:
+                    self.locations[PACMAN_CHARACTER] = (i, j)
+                elif comp == 5:
+                    self.locations[GREEN_GHOST] = (i, j)
+                elif comp == 4:
+                    self.locations[YELLOW_GHOST] = (i, j)
+                elif comp == 3:
+                    self.locations[BLUE_GHOST] = (i, j)
+                elif comp == 2:
+                    self.locations[RED_GHOST] = (i, j)
+
 
     def modify_state_tuple(self, state, new_positions: dict):
         """Modify the state of the tuple with the given changes dictionary"""
@@ -382,27 +381,27 @@ class PacmanProblem(search.Problem):
         player_i_new: int = None
         player_j_new: int = None
         # calculate the new (i,j) location of pacman
-        match move:
-            case "R":
-                player_i_new = player_i
-                player_j_new = player_j + 1
-                if player_j_new >= m:
-                    return state
-            case "L":
-                player_i_new = player_i
-                player_j_new = player_j - 1
-                if player_j_new < 0:
-                    return state
-            case "U":
-                player_i_new = player_i - 1
-                player_j_new = player_j
-                if player_i_new < 0:
-                    return state
-            case "D":
-                player_i_new = player_i + 1
-                player_j_new = player_j
-                if player_i_new >= n:
-                    return state
+        if move == "R":
+            player_i_new = player_i
+            player_j_new = player_j + 1
+            if player_j_new >= m:
+                return state
+        elif move == "L":
+            player_i_new = player_i
+            player_j_new = player_j - 1
+            if player_j_new < 0:
+                return state
+        elif move == "U":
+            player_i_new = player_i - 1
+            player_j_new = player_j
+            if player_i_new < 0:
+                return state
+        elif move == "D":
+            player_i_new = player_i + 1
+            player_j_new = player_j
+            if player_i_new >= n:
+                return state
+       
         return self.modify_state_tuple(
             state,
             self.calculate_new_positions(
