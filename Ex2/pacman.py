@@ -23,11 +23,11 @@ class Game:
         self.init_locations = dict.fromkeys((70, 20, 30, 40, 50))
         self.init_pellets = set()
         
-        for j, row in enumerate(self.init):
-            for i, square in enumerate(row):
-                what_is = divmod(square, 100)
-                if 20 <= what_is[0] <= 50 or what_is[0] == 70:
-                    self.init_locations[what_is[0]] = (i,j)
+        for i, row in enumerate(self.init):
+            for j, square in enumerate(row):
+                what_is = divmod(square, 10)
+                if 2 <= what_is[0] <= 5 or what_is[0] == 7:
+                    self.init_locations[what_is[0] * 10] = (i,j)
                 if what_is[1] == 1:
                     self.init_pellets.add((i,j))
            
