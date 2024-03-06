@@ -9,7 +9,7 @@ def evaluate(board, steps, p = 0.7):
 
     t1 = time.time()
     controller = ex2.Controller(len(board[0]), len(board), run_pacman.init_locations.copy(), 
-                        run_pacman.init_pellets.copy(), steps)
+                        run_pacman.init_pellets.copy(), steps, run_pacman)
     t2 = time.time()
     
     print("Controller initialization took: ", t2 - t1, " seconds.\n")

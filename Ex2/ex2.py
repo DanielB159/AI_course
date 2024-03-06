@@ -1,13 +1,14 @@
 import time
 import random
 import copy
+from pacman import Game
 
 id = ["315113159"]
 
 class Controller:
     "This class is a controller for a Pacman game."
     
-    def __init__(self, N, M, init_locations, init_pellets, steps):
+    def __init__(self, N, M, init_locations, init_pellets, steps, run_pacman: Game):
         """Initialize controller for given game board and number of steps.
         This method MUST terminate within the specified timeout.
         N - board size along the coordinate x
@@ -17,18 +18,21 @@ class Controller:
         steps - number of steps the controller will perform
         """
         # initialize the constants of the problem
+        self.game : Game = run_pacman
         self.N = N
         self.M = M
         self.locations = copy.deepcopy(init_locations)
         self.init_locations = copy.deepcopy(init_locations)
         self.pellets = init_pellets
         self.init_pellets = init_pellets
-        self.policy = dict()
+        self.Q = dict()
+        self.initial_state : tuple
+        # self.policy = dict()
         self.initialize_Q()
         # run the Q_learning algorithm
         self.Q_learning()
-        # update the policy
-        self.update_policy()
+        # # update the policy
+        # self.update_policy()
 
     def create_state(self, locations: dict, pellets: set) -> tuple:
         """Create state tuple based on the locations and the pellets"""
@@ -38,41 +42,85 @@ class Controller:
         state = [0] * (N * M)
         # update the pacman location in the states
         for key, value in locations.items():
-            if key == 70:
+            if key == 7:
                 state[value[0]*N + value[1]] = key
         # update the locations of the pellets
         for i, j in pellets:
             curr = state[i*N + j]
             if curr == 0:
                 state[i*N + j] = 11
-            elif 20 <= curr <= 50:
+            elif 2 <= curr <= 5:
                 state[i*N + j] += 1
         return tuple(state)
-
 
     def Q_learning(self):
         """Run the whole Q_Learning algorithm to learn the best policy"""
         # Set the parameters for the Q-learning algorithm
-        ELSILON = 1
         GAMMA = 0.7
-        ITERATIONS = 5000
+        ALPHA = 0.5
+        ITERATIONS = 1000
+        EPSILON = 1 - 1 / ITERATIONS
+
+
+        self.game.reset()
+        # Run the first step of the algorithm randomly:
+        action = random.choice(['L','D','R','U'])
+        reward = self.game.update_board(self.game.actions[action])
+        state = self.create_state(self.game.locations, self.game.pellets)
+        self.Q[(self.initial_state, action)] = (1 - ALPHA) * self.Q[(self.initial_state, action)] + ALPHA*(reward + GAMMA * self.get_max_Q_value(state))
+
         # Run the algorithm for a limited amount of iterations
-        for _ in range(ITERATIONS):
-            pass
+        for i in range(1,ITERATIONS,1):
+            if self.game.done:
+                self.game.reset()
+
+            # select by an epsilon greedy policy to explore / exploit
+            if random.random() < EPSILON:
+                action = random.choice(['L','D','R','U'])
+            else:
+                action = self.get_max_Q_action(state)
             
+            # perform an update on the game
+            reward = self.game.update_board(self.game.actions[action])
 
+            # get the current state of the game
+            new_state = self.create_state(self.game.locations, self.game.pellets)
 
+            # perform the TD-update
+            self.Q[(state, action)] = (1 - ALPHA) * self.Q[(state, action)] + ALPHA * (reward + GAMMA * self.get_max_Q_value(new_state))
 
+            # update the state to be the new state
+            state = new_state
+            EPSILON = 1 - 1 / i
 
     def initialize_Q(self):
         """Initialize the initial values for Q"""
-        self.Q = dict()
+        self.initial_state = self.create_state(self.init_locations, self.init_pellets)
         for action in ['L','D','R','U']:
-            self.Q[(self.create_state(self.init_locations, self.init_pellets),action)] = 0
+            self.Q[(self.initial_state,action)] = 0
+
+    def add_new_Q(self, state):
+        for action in ['L','D','R','U']:
+            self.Q[(state,action)] = 0
+    
+    def get_max_Q_value(self,state):
+        """Get the max value of Q, in the current state"""
+        action = 'L'
+        if (state, action) not in self.Q:
+            self.add_new_Q(state)
+        value = self.Q[(state, 'L')]
+        for a in ['R', 'U', 'D']:
+            new_val = self.Q[(state,a)]
+            if new_val > value:
+                action = a
+                value = new_val
+        return value
     
     def get_max_Q_action(self, state):
         """Get the action that maximizes the value of Q, in the current state"""
-        action : 'L'
+        action = 'L'
+        if (state, action) not in self.Q:
+            self.add_new_Q(state)
         value = self.Q[(state, 'L')]
         for a in ['R', 'U', 'D']:
             new_val = self.Q[(state,a)]
@@ -81,14 +129,14 @@ class Controller:
                 value = new_val
         return action
     
-    def update_policy(self):
-        for state in self.Q.keys():
-            self.policy[state] = self.get_max_Q_action(state)
+    # def update_policy(self):
+    #     for state in self.Q.keys():
+    #         self.policy[state] = self.get_max_Q_action(state)
 
     def choose_next_move(self, locations, pellets):
         "Choose next action for Pacman given the current state of the board."
         state = self.create_state(locations, pellets)
         # if state in self.policy:
-        return self.policy[state]
+        return self.get_max_Q_action(state)
         # return random.choice('L','D','R','U')
     
