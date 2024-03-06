@@ -18,16 +18,16 @@ class Game:
     def set_locations(self):
         """Sets the locations of ghost and pellets from the initial state.
         Magic numbers for ghosts and Pacman: 
-        20 - red, 30 - blue, 40 - yellow, 50 - green and 70 - Pacman."""
+        2 - red, 3 - blue, 4 - yellow, 5 - green and 7 - Pacman."""
         
-        self.init_locations = dict.fromkeys((70, 20, 30, 40, 50))
+        self.init_locations = dict.fromkeys((7, 2, 3, 4, 5))
         self.init_pellets = set()
         
         for i, row in enumerate(self.init):
             for j, square in enumerate(row):
                 what_is = divmod(square, 10)
                 if 2 <= what_is[0] <= 5 or what_is[0] == 7:
-                    self.init_locations[what_is[0] * 10] = (i,j)
+                    self.init_locations[what_is[0]] = (i,j)
                 if what_is[1] == 1:
                     self.init_pellets.add((i,j))
            
@@ -47,21 +47,21 @@ class Game:
     def move_pacman(self, move):    
         move_check = move[0] + self.locations[7][0], move[1] + self.locations[7][1]
         
-        if not self.there_is_cell(move_check) or self.board[move_check[1]][move_check[0]] >= 89:
+        if not self.there_is_cell(move_check) or self.board[move_check[0]][move_check[1]] >= 89:
             return 0
         
-        what_is = divmod(self.board[move_check[1]][move_check[0]], 100)
+        what_is = divmod(self.board[move_check[0]][move_check[1]], 10)
         
-        if 20 <= what_is[0] <= 50:
+        if 2 <= what_is[0] <= 5:
             if random.random() < 1 - 0.2 * (what_is[0]):
                 self.done = True
                 return 0
             else:
                 self.locations[what_is[0]] = None
 
-        self.board[self.locations[7][1]][self.locations[7][0]] -= 60
+        self.board[self.locations[7][0]][self.locations[7][1]] -= 60
         self.locations[7] = move_check
-        self.board[self.locations[7][1]][self.locations[7][0]] = 70
+        self.board[self.locations[7][0]][self.locations[7][1]] = 70
             
         if what_is[1] == 1:
             self.pellets.remove(move_check)
@@ -91,7 +91,7 @@ class Game:
                 self.reset()
             
             move = policy.choose_next_move(self.locations.copy(), self.pellets.copy())
-            moves = self.actions.keys()
+            moves = list(self.actions.keys())
             
             if move not in moves:
                 print("This is wrong!")

@@ -4,21 +4,21 @@ import ex2
 import time
 
 def evaluate(board, steps, p = 0.7):    
-        """Run solver function on given problem and evaluate it's effectiveness."""
-        run_pacman = pacman.Game(steps, board) 
+    """Run solver function on given problem and evaluate it's effectiveness."""
+    run_pacman = pacman.Game(steps, board) 
 
-        t1 = time.time()
-        controller = ex2.Controller(len(board[0]), len(board), run_pacman.init_locations.copy(), 
-                          run_pacman.init_pellets.copy(), steps)
-        t2 = time.time()
-        
-        print("Controller initialization took: ", t2 - t1, " seconds.\n")
-        
-        t3 = time.time()
-        print("The average score for the problem is:", 
-            run_pacman.evaluate_policy(controller, p, 30, visualize=False))
-        t4 = time.time()
-        print("Controller evaluation took: ", t4 - t3, " seconds")
+    t1 = time.time()
+    controller = ex2.Controller(len(board[0]), len(board), run_pacman.init_locations.copy(), 
+                        run_pacman.init_pellets.copy(), steps)
+    t2 = time.time()
+    
+    print("Controller initialization took: ", t2 - t1, " seconds.\n")
+    
+    t3 = time.time()
+    print("The average score for the problem is:", 
+        run_pacman.evaluate_policy(controller, p, 30, visualize=False))
+    t4 = time.time()
+    print("Controller evaluation took: ", t4 - t3, " seconds")
 
 def main():
     """Print student id and run evaluation on a given game"""
