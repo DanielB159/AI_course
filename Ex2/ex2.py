@@ -30,8 +30,6 @@ class Controller:
         # update the policy
         self.update_policy()
 
-
-
     def create_state(self, locations: dict, pellets: set) -> tuple:
         """Create state tuple based on the locations and the pellets"""
         N = self.N
@@ -54,7 +52,15 @@ class Controller:
 
     def Q_learning(self):
         """Run the whole Q_Learning algorithm to learn the best policy"""
-        epsilon = 1
+        # Set the parameters for the Q-learning algorithm
+        ELSILON = 1
+        GAMMA = 0.7
+        ITERATIONS = 5000
+        # Run the algorithm for a limited amount of iterations
+        for _ in range(ITERATIONS):
+            pass
+            
+
 
 
 
@@ -64,8 +70,6 @@ class Controller:
         for action in ['L','D','R','U']:
             self.Q[(self.create_state(self.init_locations, self.init_pellets),action)] = 0
     
-
-
     def get_max_Q_action(self, state):
         """Get the action that maximizes the value of Q, in the current state"""
         action : 'L'
@@ -80,9 +84,6 @@ class Controller:
     def update_policy(self):
         for state in self.Q.keys():
             self.policy[state] = self.get_max_Q_action(state)
-
-        
-
 
     def choose_next_move(self, locations, pellets):
         "Choose next action for Pacman given the current state of the board."
