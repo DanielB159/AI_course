@@ -39,27 +39,28 @@ class Controller:
         N = self.N
         M = self.M
         # create the list that will represent the state that locations represents
-        state = [0] * (N * M)
+        # state = [0] * (N * M)
+        state = [[0] * N for _ in range(M)]
         # update the pacman location in the states
         for key, value in locations.items():
             if key == 7:
-                state[value[0]*N + value[1]] = key
+                state[value[0]][value[1]] = key
         # update the locations of the pellets
         for i, j in pellets:
-            curr = state[i*N + j]
+            curr = state[i][j]
             if curr == 0:
-                state[i*N + j] = 11
+                state[i][j] = 11
             elif 2 <= curr <= 5:
-                state[i*N + j] += 1
-        return tuple(state)
+                state[i][j] += 1
+        return tuple([tuple(row) for row in state])
 
     def Q_learning(self):
         """Run the whole Q_Learning algorithm to learn the best policy"""
         # Set the parameters for the Q-learning algorithm
         GAMMA = 0.7
         ALPHA = 0.5
-        ITERATIONS = 1000
-        EPSILON = 1 - 1 / ITERATIONS
+        ITERATIONS = 100000 * 6
+        EPSILON = 0.97
 
 
         self.game.reset()
@@ -91,7 +92,8 @@ class Controller:
 
             # update the state to be the new state
             state = new_state
-            EPSILON = 1 - 1 / i
+            # EPSILON = EPSILON - 1 / ITERATIONS
+        print("got here")
 
     def initialize_Q(self):
         """Initialize the initial values for Q"""
