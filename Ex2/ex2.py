@@ -8,7 +8,7 @@ id = ["315113159"]
 class Controller:
     "This class is a controller for a Pacman game."
     
-    def __init__(self, N, M, init_locations, init_pellets, steps, run_pacman: Game):
+    def __init__(self, N, M, init_locations, init_pellets, steps):
         """Initialize controller for given game board and number of steps.
         This method MUST terminate within the specified timeout.
         N - board size along the coordinate x
@@ -18,7 +18,7 @@ class Controller:
         steps - number of steps the controller will perform
         """
         # initialize the constants of the problem
-        self.game : Game = run_pacman
+        self.game : Game = Game(steps, self.create_board(N, M, init_locations, init_pellets))
         self.N = N
         self.M = M
         self.locations = copy.deepcopy(init_locations)
@@ -27,12 +27,34 @@ class Controller:
         self.init_pellets = init_pellets
         self.Q = dict()
         self.initial_state : tuple
+        # Assume some value of p
+        self.p = 0.7
         # self.policy = dict()
         self.initialize_Q()
         # run the Q_learning algorithm
         self.Q_learning()
         # # update the policy
         # self.update_policy()
+
+
+    def create_board(self, N, M, locations, pellets):
+        """Create the board for the game"""
+        board = [[10] * N for _ in range(M)]
+        for key, value in locations.items():
+            if value is not None:
+                if key == 7:
+                    board[value[0]][value[1]] = key * 10
+                else:
+                    board[value[0]][value[1]] = key * 10
+        for i, j in pellets:
+            if board[i][j] == 10:
+                board[i][j] = 11
+            else:
+                board[i][j] += 1
+            
+        return tuple([tuple(row) for row in board])
+
+
 
     def create_state(self, locations: dict, pellets: set) -> tuple:
         """Create state tuple based on the locations and the pellets"""
@@ -71,7 +93,7 @@ class Controller:
         self.Q[(self.initial_state, action)] = (1 - ALPHA) * self.Q[(self.initial_state, action)] + ALPHA*(reward + GAMMA * self.get_max_Q_value(state))
 
         # Run the algorithm for a limited amount of iterations
-        for i in range(1,ITERATIONS,1):
+        for _ in range(1,ITERATIONS,1):
             if self.game.done:
                 self.game.reset()
 
@@ -81,7 +103,12 @@ class Controller:
             else:
                 action = self.get_max_Q_action(state)
             
-            # perform an update on the game
+            # choose the given action to perform with probability p, and a random other action with prob 1-p
+            if random.random() > self.p:
+                moves = ['L','D','R','U']
+                moves.remove(action)
+                action = random.choice(moves)
+            
             reward = self.game.update_board(self.game.actions[action])
 
             # get the current state of the game
@@ -93,7 +120,6 @@ class Controller:
             # update the state to be the new state
             state = new_state
             # EPSILON = EPSILON - 1 / ITERATIONS
-        print("got here")
 
     def initialize_Q(self):
         """Initialize the initial values for Q"""

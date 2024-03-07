@@ -9,7 +9,7 @@ def evaluate(board, steps, p = 0.7):
 
     t1 = time.time()
     controller = ex2.Controller(len(board[0]), len(board), run_pacman.init_locations.copy(), 
-                        run_pacman.init_pellets.copy(), steps, run_pacman)
+                        run_pacman.init_pellets.copy(), steps)
     t2 = time.time()
     
     print("Controller initialization took: ", t2 - t1, " seconds.\n")
@@ -24,11 +24,11 @@ def main():
     """Print student id and run evaluation on a given game"""
     print("\n", ex2.id)
     
-    game0 = ((20,10,10,99,10),
+    game0 = ((20,10,10,10,10),
              (10,10,10,10,41),
-             (10,11,10,99,11),
+             (10,11,10,10,11),
              (10,11,10,10,10),
-             (70,10,10,99,11))
+             (70,10,10,10,11))
     
     evaluate(game0, 100, 0.7)    
 
