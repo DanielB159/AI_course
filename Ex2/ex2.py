@@ -81,7 +81,7 @@ class Controller:
         # Set the parameters for the Q-learning algorithm
         GAMMA = 0.7
         ALPHA = 0.5
-        ITERATIONS = 100000 * 6
+        ITERATIONS = 100000 * 5
         EPSILON = 0.97
 
 
