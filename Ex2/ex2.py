@@ -28,7 +28,7 @@ class Controller:
         self.Q = dict()
         self.initial_state : tuple
         # Assume some value of p
-        self.p = 0.7
+        self.p = 0.75
         # self.policy = dict()
         self.initialize_Q()
         # run the Q_learning algorithm
