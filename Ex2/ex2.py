@@ -29,12 +29,9 @@ class Controller:
         self.initial_state : tuple
         # Assume some value of p
         self.p = 0.75
-        # self.policy = dict()
         self.initialize_Q()
         # run the Q_learning algorithm
         self.Q_learning()
-        # # update the policy
-        # self.update_policy()
 
 
     def create_board(self, N, M, locations, pellets):
@@ -61,7 +58,6 @@ class Controller:
         N = self.N
         M = self.M
         # create the list that will represent the state that locations represents
-        # state = [0] * (N * M)
         state = [[0] * M for _ in range(N)]
         # update the pacman location in the states
         for key, value in locations.items():
@@ -119,7 +115,6 @@ class Controller:
 
             # update the state to be the new state
             state = new_state
-            # EPSILON = EPSILON - 1 / ITERATIONS
 
     def initialize_Q(self):
         """Initialize the initial values for Q"""
@@ -157,14 +152,10 @@ class Controller:
                 value = new_val
         return action
     
-    # def update_policy(self):
-    #     for state in self.Q.keys():
-    #         self.policy[state] = self.get_max_Q_action(state)
 
     def choose_next_move(self, locations, pellets):
         "Choose next action for Pacman given the current state of the board."
         state = self.create_state(locations, pellets)
         # if state in self.policy:
         return self.get_max_Q_action(state)
-        # return random.choice('L','D','R','U')
     
