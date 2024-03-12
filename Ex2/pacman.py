@@ -12,7 +12,7 @@ class Game:
         self.init = board
         self.set_locations()
         
-        self.actions = dict(zip(('L','D','R','U'), ((-1,0), (0,1), (1,0), (0,-1))))
+        self.actions = dict(zip(('L','D','R','U'), ((0,-1), (1,0), (0,1), (-1,0))))
         
         
     def set_locations(self):
@@ -39,7 +39,7 @@ class Game:
         self.board = list(list(row) for row in self.init)            
 
     def there_is_cell(self, move):
-        if 0 <= move[0] < len(self.init[0]) and 0 <= move[1] < len(self.init):
+        if 0 <= move[0] < len(self.init) and 0 <= move[1] < len(self.init[0]):
             return True
         return False
 

@@ -39,7 +39,7 @@ class Controller:
 
     def create_board(self, N, M, locations, pellets):
         """Create the board for the game"""
-        board = [[10] * N for _ in range(M)]
+        board = [[10] * M for _ in range(N)]
         for key, value in locations.items():
             if value is not None:
                 if key == 7:
@@ -62,7 +62,7 @@ class Controller:
         M = self.M
         # create the list that will represent the state that locations represents
         # state = [0] * (N * M)
-        state = [[0] * N for _ in range(M)]
+        state = [[0] * M for _ in range(N)]
         # update the pacman location in the states
         for key, value in locations.items():
             if key == 7:
