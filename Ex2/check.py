@@ -132,7 +132,7 @@ def main():
                 (10, 10, 10, 10, 10, 10, 10, 10, 10, 10))
 
     
-    evaluate(game19, 100, 0.7)   
+    evaluate(game0, 100, 0.7)   
 
 
 if __name__ == '__main__':

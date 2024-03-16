@@ -18,6 +18,7 @@ class Controller:
         steps - number of steps the controller will perform
         """
         # initialize the constants of the problem
+        self.start_time = time.time()
         self.game : Game = Game(steps, self.create_board(N, M, init_locations, init_pellets))
         self.N = N
         self.M = M
@@ -90,6 +91,11 @@ class Controller:
 
         # Run the algorithm for a limited amount of iterations
         for _ in range(1,ITERATIONS,1):
+
+            # if there has been over 4.5 seconds, break the loop
+            if time.time() - self.start_time > 4.5:
+                break
+
             if self.game.done:
                 self.game.reset()
 
